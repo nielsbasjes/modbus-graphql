@@ -1,8 +1,12 @@
 package nl.basjes.modbus.graphql
 
 import graphql.schema.DataFetchingEnvironment
-import nl.basjes.modbus.device.api.ModbusDevice
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLScalarType
+import nl.basjes.modbus.schema.Block
+import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice
+import nl.basjes.modbus.schema.utils.CodeGeneration
 import org.apache.commons.lang3.ThreadUtils.sleep
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.QueryMapping
@@ -17,20 +21,45 @@ class SchemaDeviceGraphQLResolver(
     val schemaDevice: SchemaDevice,
 ) {
 
+    // Maps the GraphQL block type(!!), field name to the actual Field
+    val fields: MutableMap<String, MutableMap<String, Field>> = mutableMapOf()
+
+    fun Block.gqlId() = CodeGeneration.convertToCodeCompliantName(this.id, false)
+    fun Block.gqlType() = CodeGeneration.convertToCodeCompliantName(this.id, true)
+    fun Field.gqlId() = CodeGeneration.convertToCodeCompliantName(this.id, false)
+
+    init {
+        schemaDevice.blocks.forEach { block ->
+            val blockMap = mutableMapOf<String, Field>()
+            fields[block.gqlType()] = blockMap
+            block.fields.forEach { field ->
+                blockMap[field.gqlId()] = field
+            }
+        }
+    }
+
     @QueryMapping("deviceData")
     fun queryData(
-        @Argument("maxAgeMs") maxAgeMs: Int,
+        @Argument("maxAgeMs") maxAgeMs: Int = 0,
         env: DataFetchingEnvironment
-    ): Data {
-        val selectedFields = env.selectionSet.fields.map { it.name }
+    ): DeviceData {
+        val selectedFields = env.selectionSet.fields
+            .filter { it.type is GraphQLScalarType }
+            .filter { it.parentField.type is GraphQLObjectType }
+            .filter { (it.parentField.type as GraphQLObjectType).name != "DeviceData" }
+            .map { Pair( (it.parentField.type as GraphQLObjectType).name, it.name) }
 
-        println("Query with fields $selectedFields")
+        println("Query with GQL fields ${selectedFields.joinToString(",")}")
 
-        return Data(
-                    id = "query",
-                    value = "Value query",
-                    secret = "TopSecret query"
-                )
+        val modbusFields = selectedFields.mapNotNull { (block, field) -> fields[block]?.get(field) }
+
+        println("Query with Modbus fields ${modbusFields.joinToString(", ") { "${it.block.id} - ${it.id}" }}")
+
+        modbusFields.forEach { it.need() }
+        schemaDevice.update(maxAgeMs.toLong())
+        modbusFields.forEach { it.unNeed() }
+
+        return DeviceData(schemaDevice)
     }
 
     @SubscriptionMapping("deviceData")
@@ -38,15 +67,28 @@ class SchemaDeviceGraphQLResolver(
         @Argument("intervalMs") intervalMs: Int,
         @Argument("maxAgeMs")   maxAgeMs: Int = 500,
         dataFetchingEnvironment: DataFetchingEnvironment
-    ): Flux<Data> {
-        val selectedFields = dataFetchingEnvironment.selectionSet.fields.map { it.name }
+    ): Flux<DeviceData> {
         val subscriberId = UUID.randomUUID().toString()
 
         if (intervalMs < 10 || intervalMs > 10000) {
             throw IllegalArgumentException("IntervalMs must be between 10 ms and 10000 ms (10 seconds)")
         }
 
+        val selectedFields = dataFetchingEnvironment.selectionSet.fields
+            .filter { it.type is GraphQLScalarType }
+            .filter { it.parentField.type is GraphQLObjectType }
+            .filter { (it.parentField.type as GraphQLObjectType).name != "DeviceData" }
+            .map { Pair( (it.parentField.type as GraphQLObjectType).name, it.name) }
+
+        println("Query with GQL fields ${selectedFields.joinToString(",")}")
+
+        val modbusFields = selectedFields.mapNotNull { (block, field) -> fields[block]?.get(field) }
+
+        println("Subscription with Modbus fields ${modbusFields.joinToString(", ") { "${it.block.id} - ${it.id}" }}")
         println("Subscription started: $subscriberId with fields $selectedFields returned every $intervalMs ms")
+
+        modbusFields.forEach { it.need() }
+
 
         return Flux
             .interval(
@@ -54,14 +96,12 @@ class SchemaDeviceGraphQLResolver(
                 Duration.ofMillis(intervalMs.toLong()))
             .map {
                 sleep(Duration.ofMillis(timeToNextMultiple(intervalMs.toLong())))
-                Data(
-                    id = it.toString(),
-                    value = "Value $it",
-                    secret = "TopSecret $it"
-                )
+                schemaDevice.update(maxAgeMs.toLong())
+                DeviceData(schemaDevice)
             }
             .doFinally {
                 println("Subscription ended: $subscriberId with fields $selectedFields")
+                modbusFields.forEach { it.unNeed() }
             }
     }
 }
@@ -71,5 +111,3 @@ fun timeToNextMultiple(intervalMs: Long): Long {
     val roundedNext = ((now / intervalMs) + 1) * intervalMs
     return roundedNext - now
 }
-
-data class Data(val id: String, val value: String, val secret: String)

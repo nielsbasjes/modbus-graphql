@@ -22,12 +22,17 @@ import nl.basjes.modbus.schema.SchemaDevice
 import nl.basjes.modbus.schema.get
 import org.springframework.context.annotation.Description
 import sun.net.www.protocol.http.HttpURLConnection.userAgent
-import java.util.*
+import java.time.Instant
+import java.time.ZoneOffset
+import kotlin.time.Clock
+
 
 @Description("The data from the modbus device.")
 class DeviceData(
     val schemaDevice: SchemaDevice,
 ) {
+    val timestamp = Instant.now().atOffset(ZoneOffset.UTC)
+
 //    fun getBlock(blockId: String): Block? {
 //        return schemaDevice[blockId]
 //    }

@@ -17,7 +17,6 @@
 package nl.basjes.modbus.graphql.schema
 
 import graphql.Scalars
-import graphql.scalars.ExtendedScalars
 import graphql.schema.*
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
@@ -30,11 +29,11 @@ import nl.basjes.modbus.schema.ReturnType.STRING
 import nl.basjes.modbus.schema.ReturnType.STRINGLIST
 import nl.basjes.modbus.schema.ReturnType.UNKNOWN
 import nl.basjes.modbus.schema.SchemaDevice
+import nl.basjes.modbus.schema.get
 import nl.basjes.modbus.schema.utils.CodeGeneration
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.util.function.Consumer
 
 @Configuration(proxyBeanMethods = false)
 class GraphQLSchemaInitializerSchemaDevice(
@@ -48,24 +47,9 @@ class GraphQLSchemaInitializerSchemaDevice(
         return this
     }
 
-    val blockIds = schemaDevice.blocks.map { CodeGeneration.convertToCodeCompliantName(it.id, false) }
-
-    val blocks: MutableMap<String, Block> = mutableMapOf()
-    val fields: MutableMap<String, MutableMap<String, Field>> = mutableMapOf()
-
     fun Block.gqlId() = CodeGeneration.convertToCodeCompliantName(this.id, false)
     fun Block.gqlType() = CodeGeneration.convertToCodeCompliantName(this.id, true)
     fun Field.gqlId() = CodeGeneration.convertToCodeCompliantName(this.id, false)
-
-    init {
-        schemaDevice.blocks.forEach { block ->
-            blocks[block.gqlId()] = block
-            val blockMap = fields.computeIfAbsent(block.gqlId()) { mutableMapOf() }
-            block.fields.forEach { field ->
-                blockMap[field.gqlId()] = field
-            }
-        }
-    }
 
     override fun visitGraphQLObjectType(
         objectType: GraphQLObjectType,
@@ -74,16 +58,23 @@ class GraphQLSchemaInitializerSchemaDevice(
         val codeRegistry =
             context.getVarFromParents(GraphQLCodeRegistry.Builder::class.java)
 
+        // ======================================================================================
+
         if (objectType.name == "DeviceData") {
             LogManager.getLogger(GraphQLSchemaInitializerSchemaDevice::class.java)
                 .info("Adding the `blocks` to the GraphQL Query.")
 
-            blocks.forEach { (id, block) ->
+            val allNewBlocks = mutableListOf<GraphQLFieldDefinition>()
+
+            schemaDevice.blocks.forEach { block ->
+
                 // New type
                 val blockTypeBuilder = GraphQLObjectType
                     .newObject()
                     .name(block.gqlType())
                     .description(block.description)
+
+                val allGqlFields = mutableListOf<Pair<GraphQLFieldDefinition, Field>>()
 
                 block.fields.forEach { field ->
                     val gqlType = when(field.returnType) {
@@ -102,29 +93,66 @@ class GraphQLSchemaInitializerSchemaDevice(
                         .type(gqlType)
                         .build()
 
+                    allGqlFields.add(gqlField to field)
+
                     blockTypeBuilder.field(gqlField)
                 }
 
-                // FIXME: NOTE: All data fetchers are the default getters of the Version instance.
-
                 // New "field" for the block to be put in the DeviceData
                 val blockType = GraphQLFieldDefinition.newFieldDefinition()
-                    .name(id)
+                    .name(block.gqlId())
                     .description(block.description)
                     .type(blockTypeBuilder.build())
                     .build()
 
-                // Adding an extra field with a type and a data fetcher
-                val updatedDeviceData =
-                    objectType.transform { it.field(blockType) }
+                allNewBlocks.add(blockType)
 
+                // Now add the datafetcher for the block
                 codeRegistry.dataFetcher(
                     FieldCoordinates.coordinates(objectType.name, blockType.name),
-                    DataFetcher { env: DataFetchingEnvironment -> block }
+                    DataFetcher {
+                        block
+                    }
                 )
-                return changeNode(context, updatedDeviceData)
+
+                // Now add all the datafetchers for the fields
+                allGqlFields.forEach { (gqlField, field) ->
+                    val fieldCoordinates = FieldCoordinates.coordinates(block.gqlType(), gqlField.name)
+                    when(field.returnType) {
+                        DOUBLE      ->  codeRegistry.dataFetcher(
+                            fieldCoordinates,
+                            DataFetcher {
+                                field.doubleValue
+                            }
+                        )
+                        LONG        ->  codeRegistry.dataFetcher(
+                            fieldCoordinates,
+                            DataFetcher {
+                                field.longValue
+                            }
+                        )
+                        STRING      ->  codeRegistry.dataFetcher(
+                            fieldCoordinates,
+                            DataFetcher {
+                                field.stringValue
+                            }
+                        )
+                        STRINGLIST  ->  codeRegistry.dataFetcher(
+                            fieldCoordinates,
+                            DataFetcher {
+                                field.stringListValue
+                            }
+                        )
+                        BOOLEAN     ->  TODO("Boolean")
+                        UNKNOWN     ->  throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
+                    }
+                }
             }
 
+            // Adding an extra field with a type and a data fetcher
+            val updatedDeviceData =
+                objectType.transform { objectType -> allNewBlocks.forEach { objectType.field(it) } }
+            return changeNode(context, updatedDeviceData)
         }
 
         return TraversalControl.CONTINUE
