@@ -1,6 +1,8 @@
 # What is this?
 This the base engine for making a GraphQL service that serves the information defined in a Modbus Schema.
 
+# DRAFT: DOES NOT WORK YET
+
 # Modbus Schema Toolkit
 This is part of the Modbus Schema Toolkit I ([Niels Basjes](https://niels.basjes.nl)) created that makes retrieving data from Modbus based devices a lot easier.
 
