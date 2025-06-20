@@ -32,7 +32,7 @@ class GraphQLSchemaInitializerLibraryVersion : GraphQLTypeVisitorStub() {
     // https://github.com/spring-projects/spring-graphql/issues/452#issuecomment-1256798212
     // https://www.graphql-java.com/documentation/schema/#changing-schema
     @Bean
-    fun addYauaaVersionToGraphQLSchema(): GraphQLTypeVisitor {
+    fun addModbusSchemaToolkitVersionToGraphQLSchema(): GraphQLTypeVisitor {
         return this
     }
 
@@ -56,15 +56,15 @@ class GraphQLSchemaInitializerLibraryVersion : GraphQLTypeVisitorStub() {
             val version = GraphQLObjectType
                 .newObject()
                 .name("Version")
-                .description("The version information of the underlying Yauaa runtime engine.")
-                .field(newField("gitCommitId", "The git commit id of the Yauaa engine that is used"))
-                .field(newField("gitCommitIdDescribeShort", "The git describe short of the Yauaa engine that is used"))
-                .field(newField("buildTimeStamp", "Timestamp when the engine was built."))
+                .description("The version information of the underlying Modbus Schema Toolkit.")
+                .field(newField("gitCommitId", "The git commit id of the Modbus Schema Toolkit that is used"))
+                .field(newField("gitCommitIdDescribeShort", "The git describe short of the Modbus Schema Toolkit that is used"))
+                .field(newField("buildTimeStamp", "Timestamp when the Modbus Schema Toolkit was built."))
                 .field(newField("projectVersion", "Version of the Modbus Schema Toolkit"))
-                .field(newField("copyright", "Copyright notice of the Yauaa engine that is used"))
-                .field(newField("license", "The software license Yauaa engine that is used"))
+                .field(newField("copyright", "Copyright notice of the Modbus Schema Toolkit that is used"))
+                .field(newField("license", "The software license Modbus Schema Toolkit that is used"))
                 .field(newField("url", "Project url"))
-                .field(newField("targetJREVersion", "Yauaa was build using for this target JRE version"))
+                .field(newField("buildKotlinVersion", "Modbus Schema Toolkit was build using this Kotlin version"))
                 .build()
 
             // NOTE: All data fetchers are the default getters of the Version instance.

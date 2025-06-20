@@ -47,9 +47,9 @@ class GraphQLSchemaInitializerSchemaDevice(
         return this
     }
 
-    fun Block.gqlId() = CodeGeneration.convertToCodeCompliantName(this.id, false)
-    fun Block.gqlType() = CodeGeneration.convertToCodeCompliantName(this.id, true)
-    fun Field.gqlId() = CodeGeneration.convertToCodeCompliantName(this.id, false)
+    fun Block.gqlId()   = CodeGeneration.convertToCodeCompliantName(this.id, false)
+    fun Block.gqlType() = CodeGeneration.convertToCodeCompliantName(this.id,  true)
+    fun Field.gqlId()   = CodeGeneration.convertToCodeCompliantName(this.id, false)
 
     override fun visitGraphQLObjectType(
         objectType: GraphQLObjectType,
@@ -81,7 +81,7 @@ class GraphQLSchemaInitializerSchemaDevice(
                         DOUBLE      ->  Scalars.GraphQLFloat
                         LONG        ->  Scalars.GraphQLInt // FIXME: ExtendedScalars.GraphQLLong
                         STRING      ->  Scalars.GraphQLString
-                        STRINGLIST  ->  Scalars.GraphQLString // TODO( "List<String>" )
+                        STRINGLIST  ->  Scalars.GraphQLString // FIXME: List<String>
                         BOOLEAN     ->  Scalars.GraphQLBoolean
                         UNKNOWN     ->  throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
                     }
@@ -89,7 +89,7 @@ class GraphQLSchemaInitializerSchemaDevice(
                     val gqlField = GraphQLFieldDefinition
                         .newFieldDefinition()
                         .name(field.gqlId())
-                        .description(field.description)
+                        .description(field.description + (if (field.unit.isBlank() || field.description.endsWith("(${field.unit})")) "" else " (${field.unit})"))
                         .type(gqlType)
                         .build()
 
@@ -117,35 +117,21 @@ class GraphQLSchemaInitializerSchemaDevice(
 
                 // Now add all the datafetchers for the fields
                 allGqlFields.forEach { (gqlField, field) ->
-                    val fieldCoordinates = FieldCoordinates.coordinates(block.gqlType(), gqlField.name)
-                    when(field.returnType) {
-                        DOUBLE      ->  codeRegistry.dataFetcher(
-                            fieldCoordinates,
-                            DataFetcher {
-                                field.doubleValue
+                    codeRegistry.dataFetcher(
+                        FieldCoordinates.coordinates(block.gqlType(), gqlField.name),
+                        DataFetcher {
+                            // Note: We determine the type IN the data fetcher because of edge cases where
+                            //       the type can only be determined after base data was retrieved.
+                            when (field.returnType) {
+                                DOUBLE     -> field.doubleValue
+                                LONG       -> field.longValue
+                                STRING     -> field.stringValue
+                                STRINGLIST -> field.stringListValue
+                                BOOLEAN    -> TODO("Boolean")
+                                UNKNOWN    -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
                             }
-                        )
-                        LONG        ->  codeRegistry.dataFetcher(
-                            fieldCoordinates,
-                            DataFetcher {
-                                field.longValue
-                            }
-                        )
-                        STRING      ->  codeRegistry.dataFetcher(
-                            fieldCoordinates,
-                            DataFetcher {
-                                field.stringValue
-                            }
-                        )
-                        STRINGLIST  ->  codeRegistry.dataFetcher(
-                            fieldCoordinates,
-                            DataFetcher {
-                                field.stringListValue
-                            }
-                        )
-                        BOOLEAN     ->  TODO("Boolean")
-                        UNKNOWN     ->  throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
-                    }
+                        }
+                    )
                 }
             }
 
