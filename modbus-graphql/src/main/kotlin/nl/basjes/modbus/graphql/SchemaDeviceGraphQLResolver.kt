@@ -70,8 +70,8 @@ class SchemaDeviceGraphQLResolver(
     ): Flux<DeviceData> {
         val subscriberId = UUID.randomUUID().toString()
 
-        if (intervalMs < 10 || intervalMs > 10000) {
-            throw IllegalArgumentException("IntervalMs must be between 10 ms and 10000 ms (10 seconds)")
+        if (intervalMs < 500 || intervalMs > 60000) {
+            throw IllegalArgumentException("IntervalMs must be between 500 ms (0.5 seconds) and 60000 ms (60 seconds)")
         }
 
         val selectedFields = dataFetchingEnvironment.selectionSet.fields
