@@ -1,6 +1,6 @@
 /*
- * Yet Another UserAgent Analyzer
- * Copyright (C) 2013-2025 Niels Basjes
+ * Modbus Schema Toolkit
+ * Copyright (C) 2019-2025 Niels Basjes
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package nl.basjes.modbus.graphql.schema
 
 import graphql.Scalars
+import graphql.scalars.ExtendedScalars
 import graphql.schema.*
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
@@ -29,7 +30,6 @@ import nl.basjes.modbus.schema.ReturnType.STRING
 import nl.basjes.modbus.schema.ReturnType.STRINGLIST
 import nl.basjes.modbus.schema.ReturnType.UNKNOWN
 import nl.basjes.modbus.schema.SchemaDevice
-import nl.basjes.modbus.schema.get
 import nl.basjes.modbus.schema.utils.CodeGeneration
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.annotation.Bean
@@ -77,22 +77,21 @@ class GraphQLSchemaInitializerSchemaDevice(
                 val allGqlFields = mutableListOf<Pair<GraphQLFieldDefinition, Field>>()
 
                 block.fields.forEach { field ->
-                    val gqlType = when(field.returnType) {
-                        DOUBLE      ->  Scalars.GraphQLFloat
-                        LONG        ->  Scalars.GraphQLInt // FIXME: ExtendedScalars.GraphQLLong
-                        STRING      ->  Scalars.GraphQLString
-                        STRINGLIST  ->  Scalars.GraphQLString // FIXME: List<String>
-                        BOOLEAN     ->  Scalars.GraphQLBoolean
-                        UNKNOWN     ->  throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
-                    }
-
-                    val gqlField = GraphQLFieldDefinition
+                    val gqlFieldBuilder = GraphQLFieldDefinition
                         .newFieldDefinition()
                         .name(field.gqlId())
                         .description(field.description + (if (field.unit.isBlank() || field.description.endsWith("(${field.unit})")) "" else " (${field.unit})"))
-                        .type(gqlType)
-                        .build()
 
+                    when(field.returnType) {
+                        DOUBLE      ->  gqlFieldBuilder.type(Scalars.GraphQLFloat)
+                        LONG        ->  gqlFieldBuilder.type(ExtendedScalars.GraphQLLong)
+                        STRING      ->  gqlFieldBuilder.type(Scalars.GraphQLString)
+                        STRINGLIST  ->  gqlFieldBuilder.type(GraphQLList.list(GraphQLNonNull.nonNull(Scalars.GraphQLString)))
+                        BOOLEAN     ->  gqlFieldBuilder.type(Scalars.GraphQLBoolean)
+                        UNKNOWN     ->  throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
+                    }
+
+                    val gqlField = gqlFieldBuilder.build()
                     allGqlFields.add(gqlField to field)
 
                     blockTypeBuilder.field(gqlField)

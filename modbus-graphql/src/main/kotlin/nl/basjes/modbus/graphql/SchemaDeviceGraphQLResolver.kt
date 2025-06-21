@@ -1,3 +1,20 @@
+/*
+ * Modbus Schema Toolkit
+ * Copyright (C) 2019-2025 Niels Basjes
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package nl.basjes.modbus.graphql
 
 import graphql.schema.DataFetchingEnvironment
@@ -14,6 +31,7 @@ import org.springframework.graphql.data.method.annotation.SubscriptionMapping
 import org.springframework.stereotype.Controller
 import reactor.core.publisher.Flux
 import java.time.Duration
+import java.time.Instant
 import java.util.UUID
 
 @Controller
@@ -38,25 +56,34 @@ class SchemaDeviceGraphQLResolver(
         }
     }
 
-    @QueryMapping("deviceData")
-    fun queryData(
-        @Argument("maxAgeMs") maxAgeMs: Int = 0,
-        env: DataFetchingEnvironment
-    ): DeviceData {
-        val selectedFields = env.selectionSet.fields
+    fun List<Field>.toStr() = this.joinToString(", ") { "${it.block.id} - ${it.id}" }
+
+
+    private fun modbusFields(dataFetchingEnvironment: DataFetchingEnvironment): List<Field> {
+        val selectedFields = dataFetchingEnvironment.selectionSet.fields
             .filter { it.type is GraphQLScalarType }
             .filter { it.parentField.type is GraphQLObjectType }
             .filter { (it.parentField.type as GraphQLObjectType).name != "DeviceData" }
             .map { Pair( (it.parentField.type as GraphQLObjectType).name, it.name) }
 
         println("Query with GQL fields ${selectedFields.joinToString(",")}")
-
         val modbusFields = selectedFields.mapNotNull { (block, field) -> fields[block]?.get(field) }
+        println("Query with Modbus fields ${modbusFields.toStr()}")
+        return modbusFields
+    }
 
-        println("Query with Modbus fields ${modbusFields.joinToString(", ") { "${it.block.id} - ${it.id}" }}")
+    @QueryMapping("deviceData")
+    fun queryData(
+        @Argument("maxAgeMs") maxAgeMs: Int = 0,
+        dataFetchingEnvironment: DataFetchingEnvironment
+    ): DeviceData {
+        val modbusFields = modbusFields(dataFetchingEnvironment)
 
         modbusFields.forEach { it.need() }
+        val start = Instant.now().toEpochMilli()
         schemaDevice.update(maxAgeMs.toLong())
+        val stop = Instant.now().toEpochMilli()
+        println("TIMER: Query: DURATION ${stop-start} ")
         modbusFields.forEach { it.unNeed() }
 
         return DeviceData(schemaDevice)
@@ -64,8 +91,8 @@ class SchemaDeviceGraphQLResolver(
 
     @SubscriptionMapping("deviceData")
     fun streamData(
-        @Argument("intervalMs") intervalMs: Int,
-        @Argument("maxAgeMs")   maxAgeMs: Int = 500,
+        @Argument("intervalMs") intervalMs: Int = 1000,
+        @Argument("maxAgeMs")   maxAgeMs: Int = 0,
         dataFetchingEnvironment: DataFetchingEnvironment
     ): Flux<DeviceData> {
         val subscriberId = UUID.randomUUID().toString()
@@ -74,33 +101,27 @@ class SchemaDeviceGraphQLResolver(
             throw IllegalArgumentException("IntervalMs must be between 500 ms (0.5 seconds) and 60000 ms (60 seconds)")
         }
 
-        val selectedFields = dataFetchingEnvironment.selectionSet.fields
-            .filter { it.type is GraphQLScalarType }
-            .filter { it.parentField.type is GraphQLObjectType }
-            .filter { (it.parentField.type as GraphQLObjectType).name != "DeviceData" }
-            .map { Pair( (it.parentField.type as GraphQLObjectType).name, it.name) }
+        val modbusFields = modbusFields(dataFetchingEnvironment)
 
-        println("Query with GQL fields ${selectedFields.joinToString(",")}")
-
-        val modbusFields = selectedFields.mapNotNull { (block, field) -> fields[block]?.get(field) }
-
-        println("Subscription with Modbus fields ${modbusFields.joinToString(", ") { "${it.block.id} - ${it.id}" }}")
-        println("Subscription started: $subscriberId with fields $selectedFields returned every $intervalMs ms")
+        println("START: Subscription ${subscriberId}: Modbus fields ${modbusFields.toStr()}")
 
         modbusFields.forEach { it.need() }
 
-
         return Flux
             .interval(
-                Duration.ofMillis(timeToNextMultiple(intervalMs.toLong() - 20) ),
+//                Duration.ofMillis(timeToNextMultiple(intervalMs.toLong() - 20) ),
                 Duration.ofMillis(intervalMs.toLong()))
             .map {
-                sleep(Duration.ofMillis(timeToNextMultiple(intervalMs.toLong())))
+                println("TIMER: Subscription ${subscriberId}: ${Instant.now()} ")
+//                sleep(Duration.ofMillis(timeToNextMultiple(intervalMs.toLong())))
+                val start = Instant.now().toEpochMilli()
                 schemaDevice.update(maxAgeMs.toLong())
+                val stop = Instant.now().toEpochMilli()
+                println("TIMER: Subscription ${subscriberId}: DURATION ${stop-start} ")
                 DeviceData(schemaDevice)
             }
             .doFinally {
-                println("Subscription ended: $subscriberId with fields $selectedFields")
+                println("STOP: Subscription ${subscriberId}: Modbus fields ${modbusFields.toStr()}")
                 modbusFields.forEach { it.unNeed() }
             }
     }
@@ -111,3 +132,4 @@ fun timeToNextMultiple(intervalMs: Long): Long {
     val roundedNext = ((now / intervalMs) + 1) * intervalMs
     return roundedNext - now
 }
+
