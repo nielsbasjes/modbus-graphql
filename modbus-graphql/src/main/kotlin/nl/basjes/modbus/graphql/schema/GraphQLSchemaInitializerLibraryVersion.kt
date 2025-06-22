@@ -86,12 +86,12 @@ class GraphQLSchemaInitializerLibraryVersion : GraphQLTypeVisitorStub() {
 
             // Adding an extra field with a type and a data fetcher
             val updatedQuery =
-                objectType.transform(Consumer { builder: GraphQLObjectType.Builder? -> builder!!.field(getVersion) })
+                objectType.transform { it.field(getVersion) }
 
             val coordinates = FieldCoordinates.coordinates(objectType.name, getVersion.name)
             codeRegistry.dataFetcher(
                 coordinates,
-                (DataFetcher { env: DataFetchingEnvironment? -> Version.INSTANCE }) as DataFetcher<*>
+                DataFetcher { Version.INSTANCE }
             )
             return changeNode(context, updatedQuery)
         }
