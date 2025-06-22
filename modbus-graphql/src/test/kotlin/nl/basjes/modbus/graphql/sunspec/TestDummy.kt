@@ -14,13 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package nl.basjes.modbus.graphql.sunspec
+
+import nl.basjes.modbus.graphql.main
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 class TestDummy {
 
     @Test
-    fun doNothing() {
-        // Dummy
+    @Ignore("Requires a real device")
+    fun runTheGraphQLService() {
+        main(emptyArray())
     }
 
 }

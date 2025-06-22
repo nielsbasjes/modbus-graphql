@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 scalar DateTime
+scalar Int
 
 type Query {
   "Get the device data from the device where a maximum age of the values of maxAgeMs milliseconds is allowed to optimize the queries."
@@ -28,5 +29,30 @@ type Subscription {
 
 "All the blocks with logical values defined in the Modbus Schema for the device."
 type DeviceData {
-  timestamp: DateTime
+  "The timestamp of when the answer record was constructed by the GraphQL service"
+  requestTimestamp: DateTime
+  "The timestamp of the most recent register used to construct the answer"
+  dataTimestamp: DateTime
+
+  "The underlying information of the actually performed retrievals from the Modbus device"
+  fetchBatches: [FetchBatch!]!
+
+  "The total number of milliseconds spent in getting the data (includes fetch optimizer)."
+  totalUpdateDurationMs: Int
+}
+
+type FetchBatch {
+  start: String
+  count: Int
+  "The number of milliseconds the actual fetch took. NULL if not fetched yet."
+  duration: Int
+  status: FetchStatus
+  block: String
+  fields: [String!]!
+}
+
+enum FetchStatus {
+  NOT_FETCHED
+  ERROR
+  SUCCESS
 }

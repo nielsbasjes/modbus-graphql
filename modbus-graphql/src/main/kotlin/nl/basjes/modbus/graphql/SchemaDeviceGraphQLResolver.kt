@@ -17,22 +17,28 @@
 
 package nl.basjes.modbus.graphql
 
+import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import nl.basjes.modbus.schema.Block
 import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice
+import nl.basjes.modbus.schema.fetcher.RegisterBlockFetcher.FetchBatch
 import nl.basjes.modbus.schema.utils.CodeGeneration
-import org.apache.commons.lang3.ThreadUtils.sleep
 import org.springframework.graphql.data.method.annotation.Argument
+import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
 import org.springframework.graphql.data.method.annotation.QueryMapping
+import org.springframework.graphql.data.method.annotation.SchemaMapping
 import org.springframework.graphql.data.method.annotation.SubscriptionMapping
+import org.springframework.graphql.execution.ErrorType
 import org.springframework.stereotype.Controller
 import reactor.core.publisher.Flux
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import kotlin.time.DurationUnit
 
 @Controller
 class SchemaDeviceGraphQLResolver(
@@ -72,34 +78,64 @@ class SchemaDeviceGraphQLResolver(
         return modbusFields
     }
 
+
+    fun maxAge(input: Int?): Long {
+        val maxAgeMs = input
+        if (maxAgeMs == null) {
+            return 500L // Default max age is 500 ms
+        }
+        if (maxAgeMs < 0 || maxAgeMs > 60000) {
+            throw IllegalArgumentException("maxAgeMs must be a between 0 ms and 60000 ms (60 seconds)")
+        }
+        return maxAgeMs.toLong()
+    }
+
+
+    fun interval(input: Int?): Long {
+        val intervalMs = input
+        if (intervalMs == null) {
+            return 1000L // Default interval is 1 second
+        }
+        if (intervalMs < 500 || intervalMs > 60000) {
+            throw IllegalArgumentException("IntervalMs must be between 500 ms (0.5 seconds) and 60000 ms (60 seconds)")
+        }
+        return intervalMs.toLong()
+    }
+
+
+
     @QueryMapping("deviceData")
     fun queryData(
-        @Argument("maxAgeMs") maxAgeMs: Int = 0,
+        @Argument("maxAgeMs") maxAgeMs: Int?,
         dataFetchingEnvironment: DataFetchingEnvironment
     ): DeviceData {
-        val modbusFields = modbusFields(dataFetchingEnvironment)
+        // Check and cleanup input parameters
+        val usedMaxAgeMs = maxAge(maxAgeMs)
 
+        val modbusFields = modbusFields(dataFetchingEnvironment)
         modbusFields.forEach { it.need() }
+
         val start = Instant.now().toEpochMilli()
-        schemaDevice.update(maxAgeMs.toLong())
+        val fetched = schemaDevice.update(usedMaxAgeMs)
         val stop = Instant.now().toEpochMilli()
         println("TIMER: Query: DURATION ${stop-start} ")
+
         modbusFields.forEach { it.unNeed() }
 
-        return DeviceData(schemaDevice)
+        return DeviceData(schemaDevice, fetched, (stop-start).toInt())
     }
 
     @SubscriptionMapping("deviceData")
     fun streamData(
-        @Argument("intervalMs") intervalMs: Int = 1000,
-        @Argument("maxAgeMs")   maxAgeMs: Int = 0,
+        @Argument("intervalMs") intervalMs: Int?,
+        @Argument("maxAgeMs")   maxAgeMs: Int?,
         dataFetchingEnvironment: DataFetchingEnvironment
     ): Flux<DeviceData> {
-        val subscriberId = UUID.randomUUID().toString()
+        // Check and cleanup input parameters
+        val usedIntervalMs = interval(intervalMs)
+        val usedMaxAgeMs = maxAge(maxAgeMs)
 
-        if (intervalMs < 500 || intervalMs > 60000) {
-            throw IllegalArgumentException("IntervalMs must be between 500 ms (0.5 seconds) and 60000 ms (60 seconds)")
-        }
+        val subscriberId = UUID.randomUUID().toString()
 
         val modbusFields = modbusFields(dataFetchingEnvironment)
 
@@ -110,21 +146,51 @@ class SchemaDeviceGraphQLResolver(
         return Flux
             .interval(
 //                Duration.ofMillis(timeToNextMultiple(intervalMs.toLong() - 20) ),
-                Duration.ofMillis(intervalMs.toLong()))
+                Duration.ofMillis(usedIntervalMs),
+            )
             .map {
                 println("TIMER: Subscription ${subscriberId}: ${Instant.now()} ")
 //                sleep(Duration.ofMillis(timeToNextMultiple(intervalMs.toLong())))
                 val start = Instant.now().toEpochMilli()
-                schemaDevice.update(maxAgeMs.toLong())
+                val fetched = schemaDevice.update(usedMaxAgeMs)
                 val stop = Instant.now().toEpochMilli()
                 println("TIMER: Subscription ${subscriberId}: DURATION ${stop-start} ")
-                DeviceData(schemaDevice)
+                DeviceData(schemaDevice, fetched, (stop-start).toInt())
             }
             .doFinally {
                 println("STOP: Subscription ${subscriberId}: Modbus fields ${modbusFields.toStr()}")
                 modbusFields.forEach { it.unNeed() }
             }
     }
+
+    @GraphQlExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(
+        errorBuilder: GraphqlErrorBuilder<*>,
+        ex: IllegalArgumentException,
+    ): GraphQLError =
+        errorBuilder
+            .message(ex.message)
+            .errorType(ErrorType.BAD_REQUEST)
+            .build()
+
+    @SchemaMapping("duration")
+    fun getFetchBatchDuration(fetchBatch: FetchBatch): Int {
+        val duration = fetchBatch.duration
+        if (duration == null) {
+            return 0;
+        }
+        return duration.toLong(DurationUnit.MILLISECONDS).toInt()
+    }
+
+    @SchemaMapping("status")
+    fun getFetchBatchStatus(fetchBatch: FetchBatch): String = fetchBatch.status.name.toString()
+
+    @SchemaMapping("block")
+    fun getFetchBatchBlock(fetchBatch: FetchBatch): String = fetchBatch.fields.first().block.id
+
+    @SchemaMapping("fields")
+    fun getFetchBatchFields(fetchBatch: FetchBatch): List<String> = fetchBatch.fields.map { it.id }
+
 }
 
 fun timeToNextMultiple(intervalMs: Long): Long {

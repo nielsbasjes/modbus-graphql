@@ -15,26 +15,31 @@
  * limitations under the License.
  */
 
-package nl.basjes.modbus.graphql
+package nl.basjes.modbus.graphql.testing
 
 import com.ghgande.j2mod.modbus.facade.ModbusTCPMaster
 import nl.basjes.modbus.device.api.ModbusDevice
+import nl.basjes.modbus.device.exception.ModbusException
 import nl.basjes.modbus.device.j2mod.ModbusDeviceJ2Mod
 import nl.basjes.modbus.schema.SchemaDevice
-import nl.basjes.modbus.thermia.ThermiaGenesis
+import nl.basjes.sunspec.device.SunspecDevice
 import org.springframework.context.annotation.Bean
 import org.springframework.stereotype.Component
 
 @Component
-class DemoDevice {
+class DemoDeviceSunSpec {
 
     // FIXME: For testing purpose only
 
     @Bean
     fun connectModbus() : ModbusDevice {
-        val modbusHost      = "localhost" // "thermia.iot.basjes.nl"
-        val modbusPort      = 1502 // MODBUS_STANDARD_TCP_PORT
-        val modbusUnit      = 1
+        // The hostname to connect to
+        val modbusHost        = "sunspec.iot.basjes.nl"
+
+        // Use the standards for SunSpec to connect to the device
+        val modbusPort        = 502  // MODBUS_STANDARD_TCP_PORT
+        val modbusUnit        = 126  // This is the SunSpec specific Modbus Unit ID for SMA devices
+
         print("Modbus: Connecting...")
         val modbusMaster = ModbusTCPMaster(modbusHost, modbusPort)
         modbusMaster.connect()
@@ -45,9 +50,9 @@ class DemoDevice {
     fun schemaDevice(
         modbusDevice: ModbusDevice,
     ) : SchemaDevice {
-        val thermiaGenesis = ThermiaGenesis()
-        thermiaGenesis.connect(modbusDevice)
-        return thermiaGenesis.schemaDevice
+        val schemaDevice = SunspecDevice.generate(modbusDevice) ?: throw ModbusException("Unable to read the SunSpec device schema")
+        schemaDevice.connect(modbusDevice)
+        return schemaDevice
     }
 
 }

@@ -18,7 +18,16 @@ package nl.basjes.modbus.graphql.schema
 
 import graphql.Scalars
 import graphql.scalars.ExtendedScalars
-import graphql.schema.*
+import graphql.schema.DataFetcher
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLCodeRegistry
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLList
+import graphql.schema.GraphQLNonNull
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchemaElement
+import graphql.schema.GraphQLTypeVisitor
+import graphql.schema.GraphQLTypeVisitorStub
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
 import nl.basjes.modbus.schema.Block

@@ -16,42 +16,28 @@
  */
 package nl.basjes.modbus.graphql
 
-import nl.basjes.modbus.schema.Block
-import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice
-import nl.basjes.modbus.schema.get
+import nl.basjes.modbus.schema.fetcher.RegisterBlockFetcher.FetchBatch
 import org.springframework.context.annotation.Description
-import sun.net.www.protocol.http.HttpURLConnection.userAgent
 import java.time.Instant
-import java.time.ZoneOffset
-import kotlin.time.Clock
-
+import java.time.ZoneOffset.UTC
+import java.time.ZonedDateTime
 
 @Description("The data from the modbus device.")
 class DeviceData(
     val schemaDevice: SchemaDevice,
+    val fetchBatches: List<FetchBatch>,
+    val totalUpdateDurationMs: Int,
 ) {
-    val timestamp = Instant.now().atOffset(ZoneOffset.UTC)
+    val requestTimestamp: ZonedDateTime = Instant.now().atZone(UTC)
+    val dataTimestamp: ZonedDateTime?
+        get() {
+            val fields = fetchBatches.map { it.fields }.flatten().sorted().distinct()
+            if (fields.isEmpty()) {
+                return null
+            }
+            val maxTimestamp = fields.mapNotNull { it.valueEpochMs }.toTypedArray<Long>().max()
+            return Instant.ofEpochMilli(maxTimestamp).atZone(UTC)
+        }
 
-//    fun getBlock(blockId: String): Block? {
-//        return schemaDevice[blockId]
-//    }
-//
-//    fun getField(fieldId: String): Field? {
-//        return userAgent.get(fieldName)
-//    }
-//
-//    val blocks: MutableMap<String, Block>? = null
-//
-//    val fields: MutableMap<String?, FieldResult?>
-//        get() {
-//            if (blockMap == null) {
-//                blockMap = TreeMap<String?, FieldResult?>()
-//
-//                for (fieldName in userAgent.getAvailableFieldNamesSorted()) {
-//                    fieldsMap.put(fieldName, FieldResult(fieldName, userAgent.getValue(fieldName)))
-//                }
-//            }
-//            return fieldsMap
-//        }
 }
