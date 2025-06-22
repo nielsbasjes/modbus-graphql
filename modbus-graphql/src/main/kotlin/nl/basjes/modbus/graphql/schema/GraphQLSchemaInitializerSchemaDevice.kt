@@ -86,67 +86,76 @@ class GraphQLSchemaInitializerSchemaDevice(
                 val allGqlFields = mutableListOf<Pair<GraphQLFieldDefinition, Field>>()
 
                 block.fields.forEach { field ->
-                    val gqlFieldBuilder = GraphQLFieldDefinition
-                        .newFieldDefinition()
-                        .name(field.gqlId())
-                        .description(field.description + (if (field.unit.isBlank() || field.description.endsWith("(${field.unit})")) "" else " (${field.unit})"))
+                    // Only include non-system fields
+                    if (!field.isSystem) {
+                        val gqlFieldBuilder = GraphQLFieldDefinition
+                            .newFieldDefinition()
+                            .name(field.gqlId())
+                            .description(field.description + (if (field.unit.isBlank() || field.description.endsWith("(${field.unit})")) "" else " (${field.unit})"))
 
-                    when(field.returnType) {
-                        DOUBLE      ->  gqlFieldBuilder.type(Scalars.GraphQLFloat)
-                        LONG        ->  gqlFieldBuilder.type(ExtendedScalars.GraphQLLong)
-                        STRING      ->  gqlFieldBuilder.type(Scalars.GraphQLString)
-                        STRINGLIST  ->  gqlFieldBuilder.type(GraphQLList.list(GraphQLNonNull.nonNull(Scalars.GraphQLString)))
-                        BOOLEAN     ->  gqlFieldBuilder.type(Scalars.GraphQLBoolean)
-                        UNKNOWN     ->  throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
+                        when (field.returnType) {
+                            DOUBLE -> gqlFieldBuilder.type(Scalars.GraphQLFloat)
+                            LONG -> gqlFieldBuilder.type(ExtendedScalars.GraphQLLong)
+                            STRING -> gqlFieldBuilder.type(Scalars.GraphQLString)
+                            STRINGLIST -> gqlFieldBuilder.type(GraphQLList.list(GraphQLNonNull.nonNull(Scalars.GraphQLString)))
+                            BOOLEAN -> gqlFieldBuilder.type(Scalars.GraphQLBoolean)
+                            UNKNOWN -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
+                        }
+
+                        val gqlField = gqlFieldBuilder.build()
+                        allGqlFields.add(gqlField to field)
+
+                        blockTypeBuilder.field(gqlField)
                     }
-
-                    val gqlField = gqlFieldBuilder.build()
-                    allGqlFields.add(gqlField to field)
-
-                    blockTypeBuilder.field(gqlField)
                 }
 
-                // New "field" for the block to be put in the DeviceData
-                val blockType = GraphQLFieldDefinition.newFieldDefinition()
-                    .name(block.gqlId())
-                    .description(block.description)
-                    .type(blockTypeBuilder.build())
-                    .build()
+                // Only include Blocks that have any fields
+                if (!allGqlFields.isEmpty()) {
+                    // New "field" for the block to be put in the DeviceData
+                    val blockType = GraphQLFieldDefinition.newFieldDefinition()
+                        .name(block.gqlId())
+                        .description(block.description)
+                        .type(blockTypeBuilder.build())
+                        .build()
 
-                allNewBlocks.add(blockType)
+                    allNewBlocks.add(blockType)
 
-                // Now add the datafetcher for the block
-                codeRegistry.dataFetcher(
-                    FieldCoordinates.coordinates(objectType.name, blockType.name),
-                    DataFetcher {
-                        block
-                    }
-                )
-
-                // Now add all the datafetchers for the fields
-                allGqlFields.forEach { (gqlField, field) ->
+                    // Now add the datafetcher for the block
                     codeRegistry.dataFetcher(
-                        FieldCoordinates.coordinates(block.gqlType(), gqlField.name),
+                        FieldCoordinates.coordinates(objectType.name, blockType.name),
                         DataFetcher {
-                            // Note: We determine the type IN the data fetcher because of edge cases where
-                            //       the type can only be determined after base data was retrieved.
-                            when (field.returnType) {
-                                DOUBLE     -> field.doubleValue
-                                LONG       -> field.longValue
-                                STRING     -> field.stringValue
-                                STRINGLIST -> field.stringListValue
-                                BOOLEAN    -> TODO("Boolean")
-                                UNKNOWN    -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
-                            }
+                            block
                         }
                     )
+
+                    // Now add all the datafetchers for the fields
+                    allGqlFields.forEach { (gqlField, field) ->
+                        codeRegistry.dataFetcher(
+                            FieldCoordinates.coordinates(block.gqlType(), gqlField.name),
+                            DataFetcher {
+                                // Note: We determine the type IN the data fetcher because of edge cases where
+                                //       the type can only be determined after base data was retrieved.
+                                when (field.returnType) {
+                                    DOUBLE -> field.doubleValue
+                                    LONG -> field.longValue
+                                    STRING -> field.stringValue
+                                    STRINGLIST -> field.stringListValue
+                                    BOOLEAN -> TODO("Boolean")
+                                    UNKNOWN -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
+                                }
+                            }
+                        )
+                    }
                 }
             }
 
-            // Adding an extra field with a type and a data fetcher
-            val updatedDeviceData =
-                objectType.transform { objectType -> allNewBlocks.forEach { objectType.field(it) } }
-            return changeNode(context, updatedDeviceData)
+            // Only submit changes if we have any
+            if (allNewBlocks.isNotEmpty()) {
+                // Adding an extra field with a type and a data fetcher
+                val updatedDeviceData =
+                    objectType.transform { objectType -> allNewBlocks.forEach { objectType.field(it) } }
+                return changeNode(context, updatedDeviceData)
+            }
         }
 
         return TraversalControl.CONTINUE
