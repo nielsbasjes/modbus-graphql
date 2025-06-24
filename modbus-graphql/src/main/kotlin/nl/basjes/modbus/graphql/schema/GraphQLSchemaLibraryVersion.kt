@@ -18,7 +18,6 @@ package nl.basjes.modbus.graphql.schema
 
 import graphql.Scalars
 import graphql.schema.DataFetcher
-import graphql.schema.DataFetchingEnvironment
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
@@ -32,38 +31,34 @@ import nl.basjes.modbus.version.Version
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.util.function.Consumer
 
 @Configuration(proxyBeanMethods = false)
-class GraphQLSchemaInitializerLibraryVersion : GraphQLTypeVisitorStub() {
+class GraphQLSchemaLibraryVersion : GraphQLTypeVisitorStub() {
     // References on how this works (thanks to Brad Baker https://github.com/bbakerman):
     // https://github.com/spring-projects/spring-graphql/issues/452#issuecomment-1256798212
     // https://www.graphql-java.com/documentation/schema/#changing-schema
     @Bean
-    fun addModbusSchemaToolkitVersionToGraphQLSchema(): GraphQLTypeVisitor {
-        return this
-    }
+    fun addModbusSchemaToolkitVersionToGraphQLSchema(): GraphQLTypeVisitor = this
 
-    private fun newField(name: String?, description: String?): GraphQLFieldDefinition {
-        return GraphQLFieldDefinition.newFieldDefinition().name(name).description(description)
+    private fun newField(name: String, description: String): GraphQLFieldDefinition =
+        GraphQLFieldDefinition.newFieldDefinition().name(name).description(description)
             .type(Scalars.GraphQLString).build()
-    }
 
     override fun visitGraphQLObjectType(
         objectType: GraphQLObjectType,
         context: TraverserContext<GraphQLSchemaElement?>
     ): TraversalControl? {
         val codeRegistry =
-            context.getVarFromParents<GraphQLCodeRegistry.Builder>(GraphQLCodeRegistry.Builder::class.java)
+            context.getVarFromParents(GraphQLCodeRegistry.Builder::class.java)
 
         if (objectType.name == "Query") {
-            LogManager.getLogger(GraphQLSchemaInitializerLibraryVersion::class.java)
-                .info("Adding the `version` to the GraphQL Query.")
+            LogManager.getLogger(GraphQLSchemaLibraryVersion::class.java)
+                .info("Adding the `modbusSchemaVersion` to the GraphQL Query.")
 
             // New type
             val version = GraphQLObjectType
                 .newObject()
-                .name("Version")
+                .name("ModbusSchemaVersion")
                 .description("The version information of the underlying Modbus Schema Toolkit.")
                 .field(newField("gitCommitId", "The git commit id of the Modbus Schema Toolkit that is used"))
                 .field(newField("gitCommitIdDescribeShort", "The git describe short of the Modbus Schema Toolkit that is used"))
@@ -79,7 +74,7 @@ class GraphQLSchemaInitializerLibraryVersion : GraphQLTypeVisitorStub() {
 
             // New "field" to be put in Query
             val getVersion = GraphQLFieldDefinition.newFieldDefinition()
-                .name("version")
+                .name("modbusSchemaVersion")
                 .description("Returns the version information of the underlying Modbus Schema Toolkit.")
                 .type(version)
                 .build()

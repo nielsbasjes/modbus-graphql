@@ -16,14 +16,17 @@
  */
 package nl.basjes.modbus.graphql.schema
 
-import graphql.Scalars
-import graphql.scalars.ExtendedScalars
+import graphql.Scalars.GraphQLBoolean
+import graphql.Scalars.GraphQLFloat
+import graphql.Scalars.GraphQLString
+import graphql.scalars.ExtendedScalars.GraphQLLong
 import graphql.schema.DataFetcher
-import graphql.schema.FieldCoordinates
+import graphql.schema.FieldCoordinates.coordinates
 import graphql.schema.GraphQLCodeRegistry
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLList
-import graphql.schema.GraphQLNonNull
+import graphql.schema.GraphQLFieldDefinition.newFieldDefinition
+import graphql.schema.GraphQLList.list
+import graphql.schema.GraphQLNonNull.nonNull
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchemaElement
 import graphql.schema.GraphQLTypeVisitor
@@ -45,8 +48,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration(proxyBeanMethods = false)
-class GraphQLSchemaInitializerSchemaDevice(
+class GraphQLSchemaModbusSchema(
     val schemaDevice: SchemaDevice,
+    val schemaDeviceGraphQLResolver: SchemaDeviceGraphQLResolver,
 ) : GraphQLTypeVisitorStub() {
     // References on how this works (thanks to Brad Baker https://github.com/bbakerman):
     // https://github.com/spring-projects/spring-graphql/issues/452#issuecomment-1256798212
@@ -63,15 +67,14 @@ class GraphQLSchemaInitializerSchemaDevice(
     override fun visitGraphQLObjectType(
         objectType: GraphQLObjectType,
         context: TraverserContext<GraphQLSchemaElement?>
-    ): TraversalControl? {
+    ): TraversalControl {
         val codeRegistry =
             context.getVarFromParents(GraphQLCodeRegistry.Builder::class.java)
 
-        // ======================================================================================
+        // ------------------------------------------
 
         if (objectType.name == "DeviceData") {
-            LogManager.getLogger(GraphQLSchemaInitializerSchemaDevice::class.java)
-                .info("Adding the `blocks` to the GraphQL Query.")
+            LogManager.getLogger().info("Adding the `blocks` to the GraphQL Query.")
 
             val allNewBlocks = mutableListOf<GraphQLFieldDefinition>()
 
@@ -88,18 +91,17 @@ class GraphQLSchemaInitializerSchemaDevice(
                 block.fields.forEach { field ->
                     // Only include non-system fields
                     if (!field.isSystem) {
-                        val gqlFieldBuilder = GraphQLFieldDefinition
-                            .newFieldDefinition()
+                        val gqlFieldBuilder = newFieldDefinition()
                             .name(field.gqlId())
                             .description(field.description + (if (field.unit.isBlank() || field.description.endsWith("(${field.unit})")) "" else " (${field.unit})"))
 
                         when (field.returnType) {
-                            DOUBLE -> gqlFieldBuilder.type(Scalars.GraphQLFloat)
-                            LONG -> gqlFieldBuilder.type(ExtendedScalars.GraphQLLong)
-                            STRING -> gqlFieldBuilder.type(Scalars.GraphQLString)
-                            STRINGLIST -> gqlFieldBuilder.type(GraphQLList.list(GraphQLNonNull.nonNull(Scalars.GraphQLString)))
-                            BOOLEAN -> gqlFieldBuilder.type(Scalars.GraphQLBoolean)
-                            UNKNOWN -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
+                            DOUBLE     -> gqlFieldBuilder.type(GraphQLFloat)
+                            LONG       -> gqlFieldBuilder.type(GraphQLLong)
+                            STRING     -> gqlFieldBuilder.type(GraphQLString)
+                            STRINGLIST -> gqlFieldBuilder.type(list(nonNull(GraphQLString)))
+                            BOOLEAN    -> gqlFieldBuilder.type(GraphQLBoolean)
+                            UNKNOWN    -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
                         }
 
                         val gqlField = gqlFieldBuilder.build()
@@ -112,7 +114,7 @@ class GraphQLSchemaInitializerSchemaDevice(
                 // Only include Blocks that have any fields
                 if (!allGqlFields.isEmpty()) {
                     // New "field" for the block to be put in the DeviceData
-                    val blockType = GraphQLFieldDefinition.newFieldDefinition()
+                    val blockType = newFieldDefinition()
                         .name(block.gqlId())
                         .description(block.description)
                         .type(blockTypeBuilder.build())
@@ -122,7 +124,7 @@ class GraphQLSchemaInitializerSchemaDevice(
 
                     // Now add the datafetcher for the block
                     codeRegistry.dataFetcher(
-                        FieldCoordinates.coordinates(objectType.name, blockType.name),
+                        coordinates(objectType.name, blockType.name),
                         DataFetcher {
                             block
                         }
@@ -131,18 +133,14 @@ class GraphQLSchemaInitializerSchemaDevice(
                     // Now add all the datafetchers for the fields
                     allGqlFields.forEach { (gqlField, field) ->
                         codeRegistry.dataFetcher(
-                            FieldCoordinates.coordinates(block.gqlType(), gqlField.name),
-                            DataFetcher {
-                                // Note: We determine the type IN the data fetcher because of edge cases where
-                                //       the type can only be determined after base data was retrieved.
-                                when (field.returnType) {
-                                    DOUBLE -> field.doubleValue
-                                    LONG -> field.longValue
-                                    STRING -> field.stringValue
-                                    STRINGLIST -> field.stringListValue
-                                    BOOLEAN -> TODO("Boolean")
-                                    UNKNOWN -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
-                                }
+                            coordinates(block.gqlType(), gqlField.name),
+                            when (field.returnType) {
+                                DOUBLE     -> DataFetcher { field.doubleValue     }
+                                LONG       -> DataFetcher { field.longValue       }
+                                STRING     -> DataFetcher { field.stringValue     }
+                                STRINGLIST -> DataFetcher { field.stringListValue }
+                                BOOLEAN    -> TODO("Boolean")
+                                UNKNOWN    -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
                             }
                         )
                     }
@@ -157,6 +155,8 @@ class GraphQLSchemaInitializerSchemaDevice(
                 return changeNode(context, updatedDeviceData)
             }
         }
+
+        // ------------------------------------------
 
         return TraversalControl.CONTINUE
     }

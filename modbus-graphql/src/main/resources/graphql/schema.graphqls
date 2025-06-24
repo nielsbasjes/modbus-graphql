@@ -15,44 +15,72 @@
 # limitations under the License.
 #
 scalar DateTime
-scalar Int
+
+# ------------------------------------------
 
 type Query {
   "Get the device data from the device where a maximum age of the values of maxAgeMs milliseconds is allowed to optimize the queries."
-  deviceData(maxAgeMs:Int): DeviceData
+  deviceData(
+    "The maximum age (in milliseconds) between the moment the query starts and the timestamp of the oldest underlying register value that is used by the requested Fields. This is used to optimize the query. Default is 500 ms."
+    maxAgeMs:Int! = 500,
+  ): DeviceData!
 }
+
+# ------------------------------------------
 
 type Subscription {
   "Continuously get the device data from the device. A set is returned once every intervalMs milliseconds where a maximum age of the values of maxAgeMs milliseconds is allowed to optimize the queries."
-  deviceData(intervalMs: Int, maxAgeMs:Int): DeviceData
+  deviceData(
+    "The interval (in milliseconds) which indicates the rate how fast the data must be retrieved. If the device is slower than this rate then the actual rate will follow te device. Default is 1000 ms."
+    intervalMs:Int! = 1000,
+    "The maximum age (in milliseconds) between the moment the query starts and the timestamp of the oldest underlying register value that is used by the requested Fields. This is used to optimize the query. Default is 500 ms."
+    maxAgeMs:Int! = 500,
+  ): DeviceData!
 }
+
+# ------------------------------------------
 
 "All the blocks with logical values defined in the Modbus Schema for the device."
 type DeviceData {
+  "The description of the used Modbus Schema"
+  description: String!
+
   "The timestamp of when the answer record was constructed by the GraphQL service"
-  requestTimestamp: DateTime
+  requestTimestamp: DateTime!
+
   "The timestamp of the most recent register used to construct the answer"
   dataTimestamp: DateTime
 
   "The underlying information of the actually performed retrievals from the Modbus device"
-  fetchBatches: [FetchBatch!]!
+  modbusQueries: [ModbusQuery!]!
 
   "The total number of milliseconds spent in getting the data (includes fetch optimizer)."
-  totalUpdateDurationMs: Int
+  totalUpdateDurationMs: Int!
 }
 
-type FetchBatch {
-  start: String
-  count: Int
-  "The number of milliseconds the actual fetch took. NULL if not fetched yet."
+# ------------------------------------------
+
+type ModbusQuery {
+  "The first Modbus Address that was requested."
+  start: String!
+
+  "The total number of registers that were requested."
+  count: Int!
+
+  "The total time it took (in milliseconds) to perform the Modbus retrieval. NULL if not fetched yet."
   duration: Int
-  status: FetchStatus
-  block: String
+
+  "The status of the retrieval."
+  status: ModbusQueryStatus!
+
+  "The fields that were requested that directly (!!) use the mentioned registers as input. This will in many cases also update the values of intermediate registers which are not listed here. Notation: \"BlockId|FieldId\""
   fields: [String!]!
 }
 
-enum FetchStatus {
+enum ModbusQueryStatus {
   NOT_FETCHED
   ERROR
   SUCCESS
 }
+
+# ------------------------------------------

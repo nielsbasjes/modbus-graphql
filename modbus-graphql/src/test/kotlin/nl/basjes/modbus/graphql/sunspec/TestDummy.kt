@@ -17,7 +17,6 @@
 
 package nl.basjes.modbus.graphql.sunspec
 
-import nl.basjes.modbus.graphql.main
 import kotlin.test.Ignore
 import kotlin.test.Test
 
@@ -26,7 +25,7 @@ class TestDummy {
     @Test
     @Ignore("Requires a real device")
     fun runTheGraphQLService() {
-        main(emptyArray())
+        // Nothing
     }
 
 }

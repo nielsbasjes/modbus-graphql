@@ -17,7 +17,7 @@
 package nl.basjes.modbus.graphql
 
 import nl.basjes.modbus.schema.SchemaDevice
-import nl.basjes.modbus.schema.fetcher.RegisterBlockFetcher.FetchBatch
+import nl.basjes.modbus.schema.fetcher.ModbusQuery
 import org.springframework.context.annotation.Description
 import java.time.Instant
 import java.time.ZoneOffset.UTC
@@ -26,13 +26,14 @@ import java.time.ZonedDateTime
 @Description("The data from the modbus device.")
 class DeviceData(
     val schemaDevice: SchemaDevice,
-    val fetchBatches: List<FetchBatch>,
+    val modbusQueries: List<ModbusQuery>,
     val totalUpdateDurationMs: Int,
 ) {
+    val description = schemaDevice.description
     val requestTimestamp: ZonedDateTime = Instant.now().atZone(UTC)
     val dataTimestamp: ZonedDateTime?
         get() {
-            val fields = fetchBatches.map { it.fields }.flatten().sorted().distinct()
+            val fields = modbusQueries.map { it.fields }.flatten().sorted().distinct()
             if (fields.isEmpty()) {
                 return null
             }
