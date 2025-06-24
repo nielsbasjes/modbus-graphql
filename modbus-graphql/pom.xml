@@ -93,7 +93,6 @@
     <dependency>
       <groupId>nl.basjes.modbus</groupId>
       <artifactId>modbus-api-j2mod</artifactId>
-      <version>0.8.1-SNAPSHOT</version>
     </dependency>
 
     <dependency>
