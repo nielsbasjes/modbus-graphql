@@ -50,7 +50,6 @@ import org.springframework.context.annotation.Configuration
 @Configuration(proxyBeanMethods = false)
 class GraphQLSchemaModbusSchema(
     val schemaDevice: SchemaDevice,
-    val schemaDeviceGraphQLResolver: SchemaDeviceGraphQLResolver,
 ) : GraphQLTypeVisitorStub() {
     // References on how this works (thanks to Brad Baker https://github.com/bbakerman):
     // https://github.com/spring-projects/spring-graphql/issues/452#issuecomment-1256798212

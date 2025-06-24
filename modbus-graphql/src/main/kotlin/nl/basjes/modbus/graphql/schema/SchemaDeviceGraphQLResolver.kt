@@ -178,7 +178,7 @@ class SchemaDeviceGraphQLResolver(
     fun getModbusQueryDuration(modbusQuery: ModbusQuery): Int {
         val duration = modbusQuery.duration
         if (duration == null) {
-            return 0;
+            return 0
         }
         return duration.toLong(DurationUnit.MILLISECONDS).toInt()
     }
