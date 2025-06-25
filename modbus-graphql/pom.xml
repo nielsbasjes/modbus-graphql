@@ -98,7 +98,7 @@
     <dependency>
       <groupId>nl.basjes.modbus.devices</groupId>
       <artifactId>modbus-device-thermia-genesis</artifactId>
-      <version>0.3.2-SNAPSHOT</version>
+      <version>0.4.1</version>
     </dependency>
 
     <dependency>
