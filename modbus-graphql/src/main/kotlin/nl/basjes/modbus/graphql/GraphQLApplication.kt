@@ -16,12 +16,24 @@
  */
 package nl.basjes.modbus.graphql
 
+import nl.basjes.modbus.schema.SchemaDevice
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.context.support.GenericApplicationContext
+import java.util.function.Supplier
 
 @SpringBootApplication
 class GraphQLApplication
 
-fun main(args: Array<String>) {
-    runApplication<GraphQLApplication>(*args)
+fun startGraphQLService(schemaDevice: SchemaDevice) {
+    runApplication<GraphQLApplication> {
+        addInitializers ({
+            (it as GenericApplicationContext)
+                .registerBean(
+                    SchemaDevice::class.java,
+                    Supplier { schemaDevice },
+                )
+        })
+    }
 }
+

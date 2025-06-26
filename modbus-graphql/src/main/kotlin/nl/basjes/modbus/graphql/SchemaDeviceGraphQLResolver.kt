@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-package nl.basjes.modbus.graphql.schema
+package nl.basjes.modbus.graphql
 
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
-import nl.basjes.modbus.graphql.DeviceData
 import nl.basjes.modbus.schema.Block
 import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice

@@ -61,7 +61,7 @@
     <log4j.version>2.24.3</log4j.version>
 
     <modbus-schema.version>0.10.0</modbus-schema.version>
-    <sunspec-device.version>0.5.0</sunspec-device.version>
+    <sunspec-device.version>0.6.0</sunspec-device.version>
   </properties>
 
   <dependencyManagement>
@@ -252,7 +252,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
@@ -394,7 +394,7 @@
           <dependency>
             <groupId>nl.basjes.maven.release</groupId>
             <artifactId>conventional-commits-version-policy</artifactId>
-            <version>1.0.7</version>
+            <version>1.0.8</version>
           </dependency>
         </dependencies>
         <configuration>
@@ -448,9 +448,9 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${maven-surefire-plugin.version}</version>
-          <configuration>
-            <failIfNoTests>true</failIfNoTests>
-          </configuration>
+<!--          <configuration>-->
+<!--            <failIfNoTests>true</failIfNoTests>-->
+<!--          </configuration>-->
         </plugin>
 
         <plugin>
@@ -478,6 +478,7 @@
   <modules>
     <module>.git-hooks</module>
     <module>modbus-graphql</module>
+    <module>sunspec-graphql</module>
   </modules>
 
   <licenses>

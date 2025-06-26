@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.basjes.modbus.graphql.schema
+package nl.basjes.modbus.graphql
 
 import graphql.Scalars
 import graphql.schema.DataFetcher

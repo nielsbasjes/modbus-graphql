@@ -24,8 +24,8 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>modbus-graphql</artifactId>
-  <name>Modbus GraphQL : Service</name>
+  <artifactId>sunspec-graphql</artifactId>
+  <name>Modbus GraphQL : SunSpec Service</name>
 
   <description>The Modbus Schema Toolkit makes retrieving data from Modbus based devices a lot easier.</description>
   <url>https://modbus.basjes.nl</url>
@@ -50,60 +50,16 @@
       <scope>test</scope>
     </dependency>
 
-
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-graphql</artifactId>
+      <groupId>nl.basjes.modbus.graphql</groupId>
+      <artifactId>modbus-graphql</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-webflux</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.graphql-java</groupId>
-      <artifactId>graphql-java-extended-scalars</artifactId>
-      <version>22.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.rest-assured</groupId>
-      <artifactId>rest-assured</artifactId>
-      <version>5.5.1</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>nl.basjes.modbus</groupId>
-      <artifactId>modbus-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>nl.basjes.modbus</groupId>
-      <artifactId>modbus-schema-device</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>nl.basjes.modbus</groupId>
-      <artifactId>modbus-api-j2mod</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.17.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
+      <groupId>nl.basjes.sunspec</groupId>
+      <artifactId>sunspec-device</artifactId>
+      <version>0.6.0</version>
     </dependency>
 
   </dependencies>
@@ -140,6 +96,7 @@
 
     </plugins>
   </build>
+
 
 </project>
 

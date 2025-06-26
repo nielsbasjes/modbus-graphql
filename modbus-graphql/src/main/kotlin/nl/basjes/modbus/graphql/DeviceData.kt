@@ -37,7 +37,7 @@ class DeviceData(
             if (fields.isEmpty()) {
                 return null
             }
-            val maxTimestamp = fields.mapNotNull { it.valueEpochMs }.toTypedArray<Long>().max()
+            val maxTimestamp = fields.mapNotNull { it.valueEpochMs }.toTypedArray<Long>().maxOrNull() ?: return null
             return Instant.ofEpochMilli(maxTimestamp).atZone(UTC)
         }
 

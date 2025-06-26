@@ -14,25 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package nl.basjes.modbus.graphql.testing
+package nl.basjes.sunspec.graphql
 
 import com.ghgande.j2mod.modbus.facade.ModbusTCPMaster
-import nl.basjes.modbus.device.api.ModbusDevice
 import nl.basjes.modbus.device.exception.ModbusException
 import nl.basjes.modbus.device.j2mod.ModbusDeviceJ2Mod
 import nl.basjes.modbus.schema.SchemaDevice
 import nl.basjes.sunspec.device.SunspecDevice
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
-import org.springframework.stereotype.Component
 
-@Component
-class DemoDeviceSunSpec {
-
-    // FIXME: For testing purpose only
+@SpringBootApplication(scanBasePackages = ["nl.basjes.modbus.graphql"])
+class SunSpecGraphQLApplication {
 
     @Bean
-    fun connectModbus() : ModbusDevice {
+    fun schemaDevice(): SchemaDevice {
         // The hostname to connect to
         val modbusHost        = "sunspec.iot.basjes.nl"
 
@@ -43,16 +40,15 @@ class DemoDeviceSunSpec {
         print("Modbus: Connecting...")
         val modbusMaster = ModbusTCPMaster(modbusHost, modbusPort)
         modbusMaster.connect()
-        return ModbusDeviceJ2Mod(modbusMaster, modbusUnit)
-    }
+        val modbusDevice = ModbusDeviceJ2Mod(modbusMaster, modbusUnit)
 
-    @Bean
-    fun schemaDevice(
-        modbusDevice: ModbusDevice,
-    ) : SchemaDevice {
         val schemaDevice = SunspecDevice.generate(modbusDevice) ?: throw ModbusException("Unable to read the SunSpec device schema")
         schemaDevice.connect(modbusDevice)
         return schemaDevice
     }
 
+}
+
+fun main(args: Array<String>) {
+    runApplication<SunSpecGraphQLApplication>(*args)
 }
