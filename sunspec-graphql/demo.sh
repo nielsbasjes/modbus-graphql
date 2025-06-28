@@ -15,4 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-java -jar ./target/sunspec-graphql-0.0.1-SNAPSHOT.jar nl.basjes.sunspec.graphql.SunSpecGraphQLApplication --sunspec.host=sunspec.iot.basjes.nl  --sunspec.port=502  --sunspec.unit=126
+java -jar ./target/sunspec-graphql-0.0.1-SNAPSHOT.jar --sunspec.host=sunspec.iot.basjes.nl  --sunspec.port=502  --sunspec.unit=126
