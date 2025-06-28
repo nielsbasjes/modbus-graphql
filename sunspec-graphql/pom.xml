@@ -94,6 +94,43 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <includes>
+                  <!-- This is needed to make the packaged graphql.schema file visible -->
+                  <include>nl.basjes.modbus.graphql:modbus-graphql</include>
+                </includes>
+              </artifactSet>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring-boot.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>nl.basjes.sunspec.graphql.SunSpecGraphQLApplicationKt</mainClass>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 

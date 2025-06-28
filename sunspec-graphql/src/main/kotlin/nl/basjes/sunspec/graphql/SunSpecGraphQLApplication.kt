@@ -21,29 +21,46 @@ import nl.basjes.modbus.device.exception.ModbusException
 import nl.basjes.modbus.device.j2mod.ModbusDeviceJ2Mod
 import nl.basjes.modbus.schema.SchemaDevice
 import nl.basjes.sunspec.device.SunspecDevice
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 
-@SpringBootApplication(scanBasePackages = ["nl.basjes.modbus.graphql"])
+@SpringBootApplication(scanBasePackages = ["nl.basjes.sunspec.graphql", "nl.basjes.modbus.graphql"])
 class SunSpecGraphQLApplication {
+    // The hostname to connect to
+    @Value("\${sunspec.host}")
+    private var modbusHost:String = ""
+
+    // The modbus port to connect to
+    @Value("\${sunspec.port:502}")
+    private var modbusPort:Int = 502
+
+    // The modbus unit id
+    @Value("\${sunspec.unit:1}")
+    val modbusUnit:Int = 1
+
 
     @Bean
     fun schemaDevice(): SchemaDevice {
-        // The hostname to connect to
-        val modbusHost        = "sunspec.iot.basjes.nl"
+        val logger = LoggerFactory.getLogger("SunSpec")
 
-        // Use the standards for SunSpec to connect to the device
-        val modbusPort        = 502  // MODBUS_STANDARD_TCP_PORT
-        val modbusUnit        = 126  // This is the SunSpec specific Modbus Unit ID for SMA devices
+        logger.info("Connecting to SunSpec device on:")
+        logger.info("- Modbus Hostname: {}", modbusHost)
+        logger.info("- Modbus TCP Port: {}", modbusPort)
+        logger.info("- Modbus UnitID  : {}", modbusUnit)
 
-        print("Modbus: Connecting...")
+        logger.info("Modbus: Connecting...")
         val modbusMaster = ModbusTCPMaster(modbusHost, modbusPort)
         modbusMaster.connect()
         val modbusDevice = ModbusDeviceJ2Mod(modbusMaster, modbusUnit)
+        logger.info("Modbus: Connected")
 
+        logger.info("SunSpec: Finding list of supported Models")
         val schemaDevice = SunspecDevice.generate(modbusDevice) ?: throw ModbusException("Unable to read the SunSpec device schema")
         schemaDevice.connect(modbusDevice)
+        logger.info("SunSpec: Completed")
         return schemaDevice
     }
 

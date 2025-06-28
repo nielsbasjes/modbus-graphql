@@ -60,6 +60,8 @@
     <junit5.version>5.13.1</junit5.version>
     <log4j.version>2.24.3</log4j.version>
 
+    <spring-boot.version>3.5.0</spring-boot.version>
+
     <modbus-schema.version>0.10.0</modbus-schema.version>
     <sunspec-device.version>0.6.0</sunspec-device.version>
   </properties>
@@ -101,7 +103,7 @@
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.5.0</version>
+        <version>${spring-boot.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
