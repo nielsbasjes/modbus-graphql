@@ -201,5 +201,6 @@ warn "Now go and manually push it all"
 # ----------------------------------------------------------------------------------------------------
 echo "git push"
 echo "git push --tags"
-
+echo "docker push nielsbasjes/modbus-tcp-graphql:${RELEASEVERSION}"
+echo "docker push nielsbasjes/sunspec-graphql:${RELEASEVERSION}"
 # ----------------------------------------------------------------------------------------------------

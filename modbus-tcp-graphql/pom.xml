@@ -24,8 +24,8 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sunspec-graphql</artifactId>
-  <name>Modbus GraphQL : SunSpec Service</name>
+  <artifactId>modbus-tcp-graphql</artifactId>
+  <name>Modbus GraphQL : Modbus TCP Service</name>
 
   <description>The Modbus Schema Toolkit makes retrieving data from Modbus based devices a lot easier.</description>
   <url>https://modbus.basjes.nl</url>
@@ -54,12 +54,6 @@
       <groupId>nl.basjes.modbus.graphql</groupId>
       <artifactId>modbus-graphql-common</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>nl.basjes.sunspec</groupId>
-      <artifactId>sunspec-device</artifactId>
-      <version>0.6.0</version>
     </dependency>
 
   </dependencies>
@@ -127,7 +121,7 @@
           </execution>
         </executions>
         <configuration>
-          <mainClass>nl.basjes.sunspec.graphql.SunSpecGraphQLApplicationKt</mainClass>
+          <mainClass>nl.basjes.modbus.graphql.tcp.ModbusTCPGraphQLApplicationKt</mainClass>
         </configuration>
       </plugin>
 
@@ -143,7 +137,7 @@
           <sourceDirectory>src/test/resources</sourceDirectory>
           <images>
             <image>
-              <name>nielsbasjes/sunspec-graphql:${project.version}</name>
+              <name>nielsbasjes/modbus-tcp-graphql:${project.version}</name>
               <build>
                 <maintainer>Niels Basjes</maintainer>
                 <from>openjdk:21-slim</from>
@@ -153,7 +147,7 @@
                 </tags>
 
                 <labels>
-                  <name>sunspec-graphql</name>
+                  <name>modbus-tcp-graphql</name>
                   <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
                   <org.opencontainers.image.authors>Niels Basjes</org.opencontainers.image.authors>
                   <org.opencontainers.image.url>https://modbus.basjes.nl/graphql</org.opencontainers.image.url>
@@ -164,8 +158,8 @@
                   <org.opencontainers.image.revision>${git.commit.id}</org.opencontainers.image.revision>
                   <org.opencontainers.image.vendor>Niels Basjes</org.opencontainers.image.vendor>
                   <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
-                  <org.opencontainers.image.title>GraphQL bridge to SunSpec</org.opencontainers.image.title>
-                  <org.opencontainers.image.description>This is GraphQL interface on top of any TCP based SunSpec device.</org.opencontainers.image.description>
+                  <org.opencontainers.image.title>GraphQL bridge to modbus TCP</org.opencontainers.image.title>
+                  <org.opencontainers.image.description>This is GraphQL interface on top of any TCP based Modbus Device, you only need to add the mapping definition.</org.opencontainers.image.description>
                 </labels>
                 <assembly>
                   <name>${project.build.finalName}.jar</name>

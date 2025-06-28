@@ -27,10 +27,11 @@ import java.time.ZonedDateTime
 class DeviceData(
     val schemaDevice: SchemaDevice,
     val modbusQueries: List<ModbusQuery>,
+    val requestTimestamp: ZonedDateTime,
     val totalUpdateDurationMs: Int,
 ) {
     val description = schemaDevice.description
-    val requestTimestamp: ZonedDateTime = Instant.now().atZone(UTC)
+
     val dataTimestamp: ZonedDateTime?
         get() {
             val fields = modbusQueries.map { it.fields }.flatten().sorted().distinct()

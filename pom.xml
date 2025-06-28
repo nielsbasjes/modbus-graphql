@@ -60,6 +60,15 @@
     <junit5.version>5.13.1</junit5.version>
     <log4j.version>2.24.3</log4j.version>
 
+    <!-- By default, we disable anything requiring docker and reenable it if docker is present. -->
+    <docker.skip>true</docker.skip>
+    <docker-based-tests.skip>true</docker-based-tests.skip>
+    <docker-based-package.phase>package</docker-based-package.phase>
+    <docker-maven-plugin.version>0.46.0</docker-maven-plugin.version>
+
+    <!-- The default port on which to expose if you do "mvn docker:run" -->
+    <docker.port>8080</docker.port>
+
     <spring-boot.version>3.5.0</spring-boot.version>
 
     <modbus-schema.version>0.10.0</modbus-schema.version>
@@ -270,11 +279,85 @@
 
         </plugins>
       </build>
+
     </profile>
+
+    <!-- From https://www.dontpanicblog.co.uk/2017/02/28/activate-the-maven-docker-plugin/ -->
+    <profile>
+      <id>Docker enabled for linux</id>
+      <properties>
+        <docker.skip>false</docker.skip>
+        <docker-based-tests.skip>false</docker-based-tests.skip>
+      </properties>
+      <activation>
+        <!-- Activate on Linux systems. Assume presence of docker.pid file indicates Docker is available -->
+        <file>
+          <exists>/var/run/docker.pid</exists>
+        </file>
+      </activation>
+    </profile>
+
+    <profile>
+      <id>Docker enabled for Windows 10 native</id>
+      <properties>
+        <docker.skip>false</docker.skip>
+        <docker-based-tests.skip>false</docker-based-tests.skip>
+      </properties>
+      <activation>
+        <!-- Activate on Windows 10 systems with native Docker. Check for docker.exe in default install directory -->
+        <file>
+          <exists>C:\Program Files\Docker\Docker\resources\bin\docker.exe</exists>
+        </file>
+      </activation>
+    </profile>
+
+    <profile>
+      <id>Docker enabled for Windows 10 toolbox</id>
+      <properties>
+        <docker.skip>false</docker.skip>
+        <docker-based-tests.skip>false</docker-based-tests.skip>
+      </properties>
+      <activation>
+        <!-- Activate on Windows (Docker Toolbox) systems. Assume presence of DOCKER_HOST indicates Docker is available -->
+        <property>
+          <name>env.DOCKER_HOST</name>
+        </property>
+      </activation>
+    </profile>
+
+    <!-- Some targets require something from the docker hub to complete.                -->
+    <!-- In CI systems pulling from the docker hub randomly fails with                  -->
+    <!--    Unable to pull 'openjdk:8-jdk-alpine' : toomanyrequests:                    -->
+    <!--    You have reached your pull rate limit. You may increase the limit           -->
+    <!--    by authenticating and upgrading: https://www.docker.com/increase-rate-limit -->
+    <profile>
+      <id>disableDockerHubUsages</id>
+      <properties>
+        <docker-based-package.phase>none</docker-based-package.phase>
+        <docker-based-tests.skip>true</docker-based-tests.skip>
+      </properties>
+    </profile>
+
   </profiles>
 
   <build>
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>${project.basedir}</directory>
+              <includes>
+                <!-- Cleaning the intermediate files from maven-shade-plugin. -->
+                <include>dependency-reduced-pom.xml</include>
+              </includes>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -461,7 +544,7 @@
           <version>${maven-artifact-plugin.version}</version>
           <configuration>
             <skipModules>
-              <skipModule>nl.basjes.modbus.devices/githooks</skipModule>
+              <skipModule>nl.basjes.modbus.graphql/githooks</skipModule>
             </skipModules>
           </configuration>
         </plugin>
@@ -479,7 +562,8 @@
 
   <modules>
     <module>.git-hooks</module>
-    <module>modbus-graphql</module>
+    <module>modbus-graphql-common</module>
+    <module>modbus-tcp-graphql</module>
     <module>sunspec-graphql</module>
   </modules>
 
@@ -504,8 +588,8 @@
   </developers>
 
   <scm>
-    <url>https://github.com/nielsbasjes/modbus-devices</url>
-    <connection>scm:git:https://github.com/nielsbasjes/modbus-devices.git</connection>
+    <url>https://github.com/nielsbasjes/modbus-graphql</url>
+    <connection>scm:git:https://github.com/nielsbasjes/modbus-graphql.git</connection>
     <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
     <tag>HEAD</tag>
   </scm>
