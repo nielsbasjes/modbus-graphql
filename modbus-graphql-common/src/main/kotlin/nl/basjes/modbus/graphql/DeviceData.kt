@@ -16,6 +16,7 @@
  */
 package nl.basjes.modbus.graphql
 
+import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice
 import nl.basjes.modbus.schema.fetcher.ModbusQuery
 import org.springframework.context.annotation.Description
@@ -26,6 +27,7 @@ import java.time.ZonedDateTime
 @Description("The data from the modbus device.")
 class DeviceData(
     val schemaDevice: SchemaDevice,
+    val requestedFields: List<Field>,
     val modbusQueries: List<ModbusQuery>,
     val requestTimestamp: ZonedDateTime,
     val totalUpdateDurationMs: Int,
@@ -34,11 +36,10 @@ class DeviceData(
 
     val dataTimestamp: ZonedDateTime?
         get() {
-            val fields = modbusQueries.map { it.fields }.flatten().sorted().distinct()
-            if (fields.isEmpty()) {
+            if (requestedFields.isEmpty()) {
                 return null
             }
-            val maxTimestamp = fields.mapNotNull { it.valueEpochMs }.toTypedArray<Long>().maxOrNull() ?: return null
+            val maxTimestamp = requestedFields.mapNotNull { it.valueEpochMs }.toTypedArray<Long>().maxOrNull() ?: return null
             return Instant.ofEpochMilli(maxTimestamp).atZone(UTC)
         }
 

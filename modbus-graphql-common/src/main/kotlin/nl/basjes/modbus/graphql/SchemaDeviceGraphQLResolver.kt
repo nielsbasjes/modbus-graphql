@@ -69,7 +69,7 @@ class SchemaDeviceGraphQLResolver(
 
     fun List<Field>.toStr() = this.joinToString(", ") { "(${it.block.id} | ${it.id})" }
 
-    private fun modbusFields(dataFetchingEnvironment: DataFetchingEnvironment): List<Field> {
+    private fun requestedFields(dataFetchingEnvironment: DataFetchingEnvironment): List<Field> {
         val selectedFields = dataFetchingEnvironment.selectionSet.fields
             .filter { it.type is GraphQLScalarType }
             .filter { it.parentField.type is GraphQLObjectType }
@@ -106,9 +106,9 @@ class SchemaDeviceGraphQLResolver(
         // Check and cleanup input parameters
         val usedMaxAgeMs = maxAge(maxAgeMs)
 
-        val modbusFields = modbusFields(dataFetchingEnvironment)
+        val requestedFields = requestedFields(dataFetchingEnvironment)
 
-        modbusFields.forEach { it.need() }
+        requestedFields.forEach { it.need() }
 
         val start = Instant.now()
         logger.trace("Query: START@    {}", start)
@@ -116,11 +116,10 @@ class SchemaDeviceGraphQLResolver(
         val stop = Instant.now().toEpochMilli()
         val duration =  (stop - start.toEpochMilli()).toInt()
         logger.trace("Query: COMPLETE@ {} DURATION {}ms to do {} Modbus Requests",  Instant.now(), duration, modbusQueries.size)
-        DeviceData(schemaDevice, modbusQueries, start.atZone(UTC), duration)
 
-        modbusFields.forEach { it.unNeed() }
+        requestedFields.forEach { it.unNeed() }
 
-        return DeviceData(schemaDevice, modbusQueries, start.atZone(UTC), duration)
+        return DeviceData(schemaDevice, requestedFields, modbusQueries, start.atZone(UTC), duration)
     }
 
     // ------------------------------------------
@@ -138,11 +137,11 @@ class SchemaDeviceGraphQLResolver(
 
         val subscriberId = UUID.randomUUID().toString()
 
-        val modbusFields = modbusFields(dataFetchingEnvironment)
+        val requestedFields = requestedFields(dataFetchingEnvironment)
 
-        logger.trace("START: Subscription ${subscriberId}: Modbus fields ${modbusFields.toStr()}")
+        logger.trace("START: Subscription ${subscriberId}: Modbus fields ${requestedFields.toStr()}")
 
-        modbusFields.forEach { it.need() }
+        requestedFields.forEach { it.need() }
 
         return Flux
             .interval(
@@ -158,11 +157,11 @@ class SchemaDeviceGraphQLResolver(
                 val stop = Instant.now().toEpochMilli()
                 val duration =  (stop - start.toEpochMilli()).toInt()
                 logger.trace("TIMER: Subscription {}: COMPLETE@ {} DURATION {}ms to do {} Modbus Requests", subscriberId, Instant.now(), duration, modbusQueries.size)
-                DeviceData(schemaDevice, modbusQueries, start.atZone(UTC), duration)
+                DeviceData(schemaDevice, requestedFields, modbusQueries, start.atZone(UTC), duration)
             }
             .doFinally {
-                logger.trace("STOP: Subscription ${subscriberId}: Modbus fields ${modbusFields.toStr()}")
-                modbusFields.forEach { it.unNeed() }
+                logger.trace("STOP: Subscription ${subscriberId}: Modbus fields ${requestedFields.toStr()}")
+                requestedFields.forEach { it.unNeed() }
             }
     }
 
