@@ -69,7 +69,7 @@
     <!-- The default port on which to expose if you do "mvn docker:run" -->
     <docker.port>8080</docker.port>
 
-    <spring-boot.version>3.5.0</spring-boot.version>
+    <spring-boot.version>3.5.3</spring-boot.version>
 
     <modbus-schema.version>0.10.0</modbus-schema.version>
     <sunspec-device.version>0.6.0</sunspec-device.version>
@@ -96,7 +96,7 @@
       <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-bom</artifactId>
-        <version>6.4.4</version>
+        <version>6.5.1</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
