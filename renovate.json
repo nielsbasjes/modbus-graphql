@@ -13,6 +13,11 @@
       ]
     },
     {
+      "description": "Disable strange versions of graphql-java",
+      "matchPackagePrefixes": ["com.graphql-java"],
+      "allowedVersions": "/^[0-9]{1,3}\\.[0-9]{1,3}(?:\\.[0-9]{1,3})?$/"
+    },
+    {
       "groupSlug": "logging",
       "groupName": "logging",
       "labels": [
