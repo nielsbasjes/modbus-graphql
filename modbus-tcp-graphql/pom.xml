@@ -101,7 +101,7 @@
               <artifactSet>
                 <includes>
                   <!-- This is needed to make the packaged graphql.schema file visible -->
-                  <include>nl.basjes.modbus.graphql:modbus-graphql</include>
+                  <include>nl.basjes.modbus.graphql:modbus-graphql-common</include>
                 </includes>
               </artifactSet>
             </configuration>
