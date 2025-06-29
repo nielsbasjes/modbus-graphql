@@ -38,6 +38,3 @@ logging:
   level:
     root: INFO
     graphql : INFO
-    notprivacysafe : OFF
-    nl.basjes.dsmr: INFO
-
