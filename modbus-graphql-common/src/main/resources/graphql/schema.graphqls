@@ -36,7 +36,7 @@ type Subscription {
     "The maximum age (in milliseconds) between the moment the query starts and the timestamp of the oldest underlying register value that is used by the requested Fields. This is used to optimize the query. Default is 500 ms."
     maxAgeMs:Int! = 500,
     "Setting this to true will cause the query to start at a round interval timestamp (not perfect, as best as possible). This is when is starts, when the query is complete depends mostly on the Modbus device."
-    queryAtRoundInterval:Boolean! = True,
+    queryAtRoundInterval:Boolean! = false,
   ): DeviceData!
 }
 
