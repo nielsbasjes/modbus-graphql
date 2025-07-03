@@ -187,7 +187,7 @@ RELEASEVERSION=$(git describe --abbrev=0| sed 's/^v//')
 
 info "Now verify Sonatype to release version ${RELEASEVERSION}"
 info "Go to https://central.sonatype.com/publishing/deployments"
-warn "Press any key abort or 'c' to continue"
+warn "Press any key abort or 'c' to continue and push it upstream"
 read -n 1 k <&1
 if [[ $k = c ]] ;
 then
@@ -204,7 +204,9 @@ echo "git push --tags"
 
 echo "Now build and push the docker images"
 
-mvn docker:push -pl :modbus-tcp-graphql
-mvn docker:push -pl :sunspec-graphql
+echo "git checkout ${RELEASEVERSION}"
+echo "mvn docker:push -pl :modbus-tcp-graphql"
+echo "mvn docker:push -pl :sunspec-graphql"
+echo "git checkout main"
 
 # ----------------------------------------------------------------------------------------------------
