@@ -134,12 +134,11 @@
         <configuration>
           <skip>${docker-based-tests.skip}</skip>
           <follow>false</follow>
-          <sourceDirectory>src/test/resources</sourceDirectory>
           <images>
             <image>
               <name>nielsbasjes/modbus-tcp-graphql:${project.version}</name>
               <build>
-                <from>eclipse-temurin:21-jre</from>
+                <from>${docker.baseimage}</from>
                 <tags>
                   <tag>latest</tag>
                   <tag>${project.version}</tag>

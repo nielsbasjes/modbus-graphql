@@ -187,7 +187,7 @@ RELEASEVERSION=$(git describe --abbrev=0| sed 's/^v//')
 
 info "Now verify Sonatype to release version ${RELEASEVERSION}"
 info "Go to https://central.sonatype.com/publishing/deployments"
-warn "Press any key abort or 'c' to continue and update the website"
+warn "Press any key abort or 'c' to continue"
 read -n 1 k <&1
 if [[ $k = c ]] ;
 then
@@ -201,8 +201,10 @@ warn "Now go and manually push it all"
 # ----------------------------------------------------------------------------------------------------
 echo "git push"
 echo "git push --tags"
-echo "docker push nielsbasjes/modbus-tcp-graphql:${RELEASEVERSION}"
-echo "docker push nielsbasjes/modbus-tcp-graphql:latest"
-echo "docker push nielsbasjes/sunspec-graphql:${RELEASEVERSION}"
-echo "docker push nielsbasjes/sunspec-graphql:latest"
+
+echo "Now build and push the docker images"
+
+mvn docker:push -pl :modbus-tcp-graphql
+mvn docker:push -pl :sunspec-graphql
+
 # ----------------------------------------------------------------------------------------------------
