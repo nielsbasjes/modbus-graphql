@@ -145,13 +145,16 @@
             <image>
               <name>nielsbasjes/sunspec-graphql:${project.version}</name>
               <build>
-                <maintainer>Niels Basjes</maintainer>
-                <from>openjdk:21-slim</from>
+                <from>eclipse-temurin:21-jre</from>
                 <tags>
                   <tag>latest</tag>
                   <tag>${project.version}</tag>
                 </tags>
-
+                <buildx>
+                  <platforms>
+                    <platform>${docker.platform}</platform>
+                  </platforms>
+                </buildx>
                 <labels>
                   <name>sunspec-graphql</name>
                   <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>

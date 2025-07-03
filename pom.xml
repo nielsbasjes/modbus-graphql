@@ -65,6 +65,7 @@
     <docker-based-tests.skip>true</docker-based-tests.skip>
     <docker-based-package.phase>package</docker-based-package.phase>
     <docker-maven-plugin.version>0.46.0</docker-maven-plugin.version>
+    <docker.platform>linux/amd64</docker.platform>
 
     <!-- The default port on which to expose if you do "mvn docker:run" -->
     <docker.port>8080</docker.port>
