@@ -201,10 +201,9 @@ warn "Now go and manually push it all"
 # ----------------------------------------------------------------------------------------------------
 echo "git push"
 echo "git push --tags"
-
-echo "Now build and push the docker images"
-
-echo "git checkout ${RELEASEVERSION}"
+echo ""
+echo "# Now build and push the docker images"
+echo "git checkout v${RELEASEVERSION}"
 echo "mvn docker:push -pl :modbus-tcp-graphql"
 echo "mvn docker:push -pl :sunspec-graphql"
 echo "git checkout main"
