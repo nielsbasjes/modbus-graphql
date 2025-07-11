@@ -21,7 +21,7 @@
   <parent>
     <groupId>nl.basjes.modbus.graphql</groupId>
     <artifactId>modbus-graphql-parent</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>modbus-graphql-common</artifactId>
