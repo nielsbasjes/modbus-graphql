@@ -73,8 +73,8 @@
 
     <spring-boot.version>3.5.3</spring-boot.version>
 
-    <modbus-schema.version>0.10.0</modbus-schema.version>
-    <sunspec-device.version>0.6.0</sunspec-device.version>
+    <modbus-schema.version>0.10.1-SNAPSHOT</modbus-schema.version>
+    <sunspec-device.version>0.6.1-SNAPSHOT</sunspec-device.version>
   </properties>
 
   <dependencyManagement>

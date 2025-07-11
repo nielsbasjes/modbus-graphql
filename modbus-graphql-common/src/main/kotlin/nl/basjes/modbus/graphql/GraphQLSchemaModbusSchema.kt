@@ -138,7 +138,7 @@ class GraphQLSchemaModbusSchema(
                                 LONG       -> DataFetcher { field.longValue       }
                                 STRING     -> DataFetcher { field.stringValue     }
                                 STRINGLIST -> DataFetcher { field.stringListValue }
-                                BOOLEAN    -> TODO("Boolean")
+                                BOOLEAN    -> DataFetcher { field.booleanValue    }
                                 UNKNOWN    -> throw IllegalArgumentException("The \"Unknown\" return type cannot be used")
                             }
                         )
