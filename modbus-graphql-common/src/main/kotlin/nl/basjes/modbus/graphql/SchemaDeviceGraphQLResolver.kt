@@ -21,7 +21,6 @@ import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.schema.DataFetchingEnvironment
 import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLScalarType
 import nl.basjes.modbus.schema.Block
 import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice
@@ -72,7 +71,6 @@ class SchemaDeviceGraphQLResolver(
 
     private fun requestedFields(dataFetchingEnvironment: DataFetchingEnvironment): List<Field> {
         val selectedFields = dataFetchingEnvironment.selectionSet.fields
-            .filter { it.type is GraphQLScalarType }
             .filter { it.parentField.type is GraphQLObjectType }
             .filter { (it.parentField.type as GraphQLObjectType).name != "DeviceData" }
             .map { Pair( (it.parentField.type as GraphQLObjectType).name, it.name) }
