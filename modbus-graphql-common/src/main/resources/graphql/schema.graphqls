@@ -66,8 +66,11 @@ type ModbusQuery {
   "The first Modbus Address that was requested."
   start: String!
 
-  "The total number of registers that were requested."
+  "The total number of elements (discretes/registers) that were requested."
   count: Int!
+
+  "The kind of elements that are requested: Discrete (1 bit) or Register (16 bit)"
+  type: AddressClassType!
 
   "The total time it took (in milliseconds) to perform the Modbus retrieval. NULL if not fetched yet."
   duration: Int
@@ -77,6 +80,11 @@ type ModbusQuery {
 
   "The fields that were requested that directly (!!) use the mentioned registers as input. This will in many cases also update the values of intermediate registers which are not listed here. Notation: \"BlockId|FieldId\""
   fields: [String!]!
+}
+
+enum AddressClassType {
+  DISCRETE,
+  REGISTER,
 }
 
 enum ModbusQueryStatus {
