@@ -36,6 +36,7 @@ import org.springframework.graphql.data.method.annotation.SubscriptionMapping
 import org.springframework.graphql.execution.ErrorType
 import org.springframework.stereotype.Controller
 import reactor.core.publisher.Flux
+import reactor.core.scheduler.Schedulers
 import java.lang.Thread.sleep
 import java.time.Duration
 import java.time.Instant
@@ -145,9 +146,10 @@ class SchemaDeviceGraphQLResolver(
             .interval(
                 Duration.ofMillis(usedIntervalMs),
             )
+            .publishOn(Schedulers.boundedElastic())
             .map {
                 if (queryAtRoundInterval) {
-                    sleep(Duration.ofMillis(timeToNextMultiple(intervalMs.toLong())))
+                    sleep(timeToNextMultiple(intervalMs.toLong()))
                 }
                 requestedFields.forEach { it.need() }
                 val start = Instant.now()
