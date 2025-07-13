@@ -76,9 +76,9 @@ class SchemaDeviceGraphQLResolver(
             .filter { (it.parentField.type as GraphQLObjectType).name != "DeviceData" }
             .map { Pair( (it.parentField.type as GraphQLObjectType).name, it.name) }
 
-//        logger.trace("Query with GQL fields ${selectedFields.joinToString(",")}")
+        logger.trace("Query with GQL fields {}", selectedFields.joinToString(","))
         val modbusFields = selectedFields.mapNotNull { (block, field) -> fields[block]?.get(field) }
-        logger.trace("Query with Modbus fields ${modbusFields.toStr()}")
+        logger.trace("Query with Modbus fields {}", modbusFields.toStr())
         return modbusFields
     }
 
@@ -111,7 +111,7 @@ class SchemaDeviceGraphQLResolver(
         requestedFields.forEach { it.need() }
 
         val start = Instant.now()
-        logger.trace("Query: START@    {}", start)
+        logger.trace("Query: START@    {}: Modbus fields {}", start, requestedFields.toStr())
         val modbusQueries = schemaDevice.update(usedMaxAgeMs)
         val stop = Instant.now().toEpochMilli()
         val duration =  (stop - start.toEpochMilli()).toInt()
