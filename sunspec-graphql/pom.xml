@@ -59,7 +59,7 @@
     <dependency>
       <groupId>nl.basjes.sunspec</groupId>
       <artifactId>sunspec-device</artifactId>
-      <version>0.7.0</version>
+      <version>${sunspec-device.version}</version>
     </dependency>
 
   </dependencies>
