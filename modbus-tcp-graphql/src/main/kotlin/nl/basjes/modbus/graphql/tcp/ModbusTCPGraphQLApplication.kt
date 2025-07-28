@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Bean
 import java.io.File
 
 @SpringBootApplication(scanBasePackages = ["nl.basjes.modbus.graphql.tcp","nl.basjes.modbus.graphql"])
-class SunSpecGraphQLApplication {
+ class ModbusTCPGraphQLApplication {
     // The hostname to connect to
     @Value("\${modbus.host}")
     private var modbusHost:String = ""
@@ -66,5 +66,5 @@ class SunSpecGraphQLApplication {
 }
 
 fun main(args: Array<String>) {
-    runApplication<SunSpecGraphQLApplication>(*args)
+    runApplication<ModbusTCPGraphQLApplication>(*args)
 }
