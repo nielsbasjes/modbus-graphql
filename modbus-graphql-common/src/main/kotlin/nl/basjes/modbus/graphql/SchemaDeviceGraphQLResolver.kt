@@ -24,6 +24,8 @@ import graphql.schema.GraphQLObjectType
 import nl.basjes.modbus.schema.Block
 import nl.basjes.modbus.schema.Field
 import nl.basjes.modbus.schema.SchemaDevice
+import nl.basjes.modbus.schema.fetcher.HoleModbusQuery
+import nl.basjes.modbus.schema.fetcher.MergedModbusQuery
 import nl.basjes.modbus.schema.fetcher.ModbusQuery
 import nl.basjes.modbus.schema.utils.CodeGeneration
 import org.slf4j.LoggerFactory
@@ -195,6 +197,16 @@ class SchemaDeviceGraphQLResolver(
     fun getModbusQueryStatus(modbusQuery: ModbusQuery): String = modbusQuery.status.name
 
     @SchemaMapping("fields")
-    fun getModbusQueryFields(modbusQuery: ModbusQuery): List<String> = modbusQuery.fields.map { "${it.block.id}|${it.id}" }
+    fun getModbusQueryFields(modbusQuery: ModbusQuery): List<String> = modbusQuery.tableFields()
+
+    private fun ModbusQuery.tableFields(): List<String> {
+        if (this is HoleModbusQuery) {
+            return listOf("${start} # ${count} : <Hole>")
+        }
+        if (this is MergedModbusQuery) {
+            return modbusQueries.map { it.tableFields() }.flatten()
+        }
+        return fields.map { "${start} # ${count} : ${it.block.id} | ${it.id}" }
+    }
 
 }
