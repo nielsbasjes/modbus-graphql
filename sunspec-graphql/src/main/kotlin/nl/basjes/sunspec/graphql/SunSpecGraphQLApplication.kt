@@ -30,15 +30,15 @@ import org.springframework.context.annotation.Bean
 @SpringBootApplication(scanBasePackages = ["nl.basjes.sunspec.graphql", "nl.basjes.modbus.graphql"])
 class SunSpecGraphQLApplication {
     // The hostname to connect to
-    @Value("\${sunspec.host}")
+    @Value($$"${sunspec.host}")
     private var modbusHost:String = ""
 
     // The modbus port to connect to
-    @Value("\${sunspec.port:502}")
+    @Value($$"${sunspec.port:502}")
     private var modbusPort:Int = 502
 
     // The modbus unit id
-    @Value("\${sunspec.unit:1}")
+    @Value($$"${sunspec.unit:1}")
     val modbusUnit:Int = 1
 
 

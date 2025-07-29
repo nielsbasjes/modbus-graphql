@@ -30,15 +30,15 @@ import java.io.File
 @SpringBootApplication(scanBasePackages = ["nl.basjes.modbus.graphql.tcp","nl.basjes.modbus.graphql"])
  class ModbusTCPGraphQLApplication {
     // The hostname to connect to
-    @Value("\${modbus.host}")
+    @Value($$"${modbus.host}")
     private var modbusHost:String = ""
 
     // The modbus port to connect to
-    @Value("\${modbus.port:502}")
+    @Value($$"${modbus.port:502}")
     private var modbusPort:Int = 502
 
     // The modbus unit id
-    @Value("\${modbus.unit:1}")
+    @Value($$"${modbus.unit:1}")
     val modbusUnit:Int = 1
 
     @Bean
