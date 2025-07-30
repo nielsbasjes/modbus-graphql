@@ -78,7 +78,7 @@ type ModbusQuery {
   "The status of the retrieval."
   status: ModbusQueryStatus!
 
-  "The fields that were requested that directly (!!) use the mentioned registers as input. This will in many cases also update the values of intermediate registers which are not listed here, in those cases you will see a 'hole' being queried. Notation: \"Addresses : BlockId | FieldId\""
+  "The fields that were requested that directly (!!) use the mentioned registers as input. This will in many cases also update the values of intermediate registers which are not listed here, in those cases you will see a 'hole' being queried. Notation: \"Start Address # Count : BlockId | FieldId\""
   fields: [String!]!
 }
 
