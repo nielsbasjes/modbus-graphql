@@ -21,7 +21,7 @@
   <parent>
     <groupId>nl.basjes.modbus.graphql</groupId>
     <artifactId>modbus-graphql-parent</artifactId>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.3.0</version>
   </parent>
 
   <artifactId>sunspec-graphql</artifactId>
@@ -241,7 +241,7 @@
     <url>https://github.com/nielsbasjes/modbus-graphql</url>
     <connection>scm:git:https://github.com/nielsbasjes/modbus-graphql.git</connection>
     <developerConnection>scm:git:file:///${project.basedir}</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.3.0</tag>
   </scm>
 
 </project>
