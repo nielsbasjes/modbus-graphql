@@ -64,7 +64,7 @@
     <docker.skip>true</docker.skip>
     <docker-based-tests.skip>true</docker-based-tests.skip>
     <docker-based-package.phase>package</docker-based-package.phase>
-    <docker-maven-plugin.version>0.47.0</docker-maven-plugin.version>
+    <docker-maven-plugin.version>0.48.0</docker-maven-plugin.version>
     <docker.baseimage>eclipse-temurin:17-jre</docker.baseimage>
     <docker.platform>linux/amd64,linux/arm64,linux/arm/v7</docker.platform>
 
