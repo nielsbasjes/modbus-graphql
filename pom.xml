@@ -71,7 +71,7 @@
     <!-- The default port on which to expose if you do "mvn docker:run" -->
     <docker.port>8080</docker.port>
 
-    <spring-boot.version>3.5.7</spring-boot.version>
+    <spring-boot.version>3.5.8</spring-boot.version>
 
     <modbus-schema.version>0.14.0</modbus-schema.version>
     <sunspec-device.version>0.7.3</sunspec-device.version>
