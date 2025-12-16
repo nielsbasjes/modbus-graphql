@@ -20,7 +20,7 @@ import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLTypeVisitor
 import graphql.schema.SchemaTransformer
 import graphql.schema.idl.SchemaGenerator
-import org.springframework.boot.autoconfigure.graphql.GraphQlSourceBuilderCustomizer
+import org.springframework.boot.graphql.autoconfigure.GraphQlSourceBuilderCustomizer
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
