@@ -28,6 +28,7 @@ import nl.basjes.modbus.schema.fetcher.HoleModbusQuery
 import nl.basjes.modbus.schema.fetcher.MergedModbusQuery
 import nl.basjes.modbus.schema.fetcher.ModbusQuery
 import nl.basjes.modbus.schema.utils.CodeGeneration
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.GraphQlExceptionHandler
@@ -50,7 +51,7 @@ class SchemaDeviceGraphQLResolver(
     val schemaDevice: SchemaDevice,
 ) {
 
-    val logger = LoggerFactory.getLogger("Modbus GraphQL")
+    val logger: Logger = LoggerFactory.getLogger("Modbus GraphQL")
 
     // Maps the GraphQL block type(!!), field name to the actual Field
     val fields: MutableMap<String, MutableMap<String, Field>> = mutableMapOf()
@@ -84,14 +85,14 @@ class SchemaDeviceGraphQLResolver(
     }
 
     fun maxAge(maxAgeMs: Int): Long {
-        if (maxAgeMs < 0 || maxAgeMs > 60000) {
+        if (maxAgeMs !in 0..60000) {
             throw IllegalArgumentException("maxAgeMs must be a between 0 ms and 60000 ms (60 seconds)")
         }
         return maxAgeMs.toLong()
     }
 
     fun interval(intervalMs: Int): Long {
-        if (intervalMs < 500 || intervalMs > 60000) {
+        if (intervalMs !in 500..60000) {
             throw IllegalArgumentException("IntervalMs must be between 500 ms (0.5 seconds) and 60000 ms (60 seconds)")
         }
         return intervalMs.toLong()
@@ -186,10 +187,7 @@ class SchemaDeviceGraphQLResolver(
 
     @SchemaMapping("duration")
     fun getModbusQueryDuration(modbusQuery: ModbusQuery): Int {
-        val duration = modbusQuery.duration
-        if (duration == null) {
-            return 0
-        }
+        val duration = modbusQuery.duration ?: return 0
         return duration.toLong(DurationUnit.MILLISECONDS).toInt()
     }
 
@@ -201,12 +199,12 @@ class SchemaDeviceGraphQLResolver(
 
     private fun ModbusQuery.tableFields(): List<String> {
         if (this is HoleModbusQuery) {
-            return listOf("${start} # ${count} : <Hole>")
+            return listOf("$start # $count : <Hole>")
         }
         if (this is MergedModbusQuery) {
             return modbusQueries.map { it.tableFields() }.flatten()
         }
-        return fields.map { "${start} # ${count} : ${it.block.id} | ${it.id}" }
+        return fields.map { "$start # $count : ${it.block.id} | ${it.id}" }
     }
 
 }

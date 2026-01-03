@@ -20,6 +20,7 @@ import graphql.scalars.ExtendedScalars
 import graphql.schema.GraphQLTypeVisitor
 import graphql.schema.SchemaTransformer
 import graphql.schema.idl.SchemaGenerator
+import org.springframework.beans.factory.getBeanProvider
 import org.springframework.boot.graphql.autoconfigure.GraphQlSourceBuilderCustomizer
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -50,7 +51,7 @@ class GraphQLSchemaCustomizer (
 
                     // The ordering is essentially "Random" which may cause problems if elements are deleted
                     // or if 2 try to add the same thing.
-                    for (visitor in context.getBeanProvider(GraphQLTypeVisitor::class.java)) {
+                    for (visitor in context.getBeanProvider<GraphQLTypeVisitor>()) {
                         schema = SchemaTransformer.transformSchema(schema, visitor)
                     }
                     schema
