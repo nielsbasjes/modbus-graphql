@@ -202,7 +202,7 @@ class SchemaDeviceGraphQLResolver(
             return listOf("$start # $count : <Hole>")
         }
         if (this is MergedModbusQuery) {
-            return modbusQueries.map { it.tableFields() }.flatten()
+            return modbusQueries.flatMap { it.tableFields() }
         }
         return fields.map { "$start # $count : ${it.block.id} | ${it.id}" }
     }

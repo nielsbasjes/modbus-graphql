@@ -111,7 +111,7 @@ class GraphQLSchemaModbusSchema(
                 }
 
                 // Only include Blocks that have any fields
-                if (!allGqlFields.isEmpty()) {
+                if (allGqlFields.isNotEmpty()) {
                     // New "field" for the block to be put in the DeviceData
                     val blockType = newFieldDefinition()
                         .name(block.gqlId())
